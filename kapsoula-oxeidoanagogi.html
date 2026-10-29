@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Αριθμός Οξείδωσης σε 90″ — Κάψουλα Χημείας</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  /* ============================================================
+     ΤΟKΕΝΣ ΣΧΕΔΙΑΣΜΟΥ
+     Άλλαξε ΜΟΝΟ αυτές τις μεταβλητές για να φτιάξεις νέα κάψουλα
+     με άλλη "ταυτότητα" χρώματος — όλα τα υπόλοιπα προσαρμόζονται.
+     ============================================================ */
+  :root {
+    --paper:      #E1EDF8; /* φόντο σελίδας — απαλό παστέλ γαλάζιο */
+    --paper-line: #D6E6F2; /* λεπτές διαχωριστικές γραμμές */
+    --card-bg:    #FFFFFF;
+    --ink:        #223142; /* κύριο κείμενο */
+    --ink-soft:   #64798D; /* δευτερεύον κείμενο */
+    --acid:       #E49A98; /* "όξινο" — λάθος / προσοχή, σπάνια χρήση */
+    --base:       #6FA8DC; /* "βασικό" — σωστό / κύριο accent */
+    --base-soft:  #DCEEFB; /* απαλό φόντο πάνω σε --base */
+    --amber:      #F0CB86; /* highlight / hover / eyebrow */
+    --amber-soft: #FBF3E0;
+    --radius:     14px;
+    --font-display: "Fraunces", serif;
+    --font-body:    "IBM Plex Sans", sans-serif;
+    --font-mono:    "IBM Plex Mono", monospace;
+  }
+  body.dark {
+    --paper:      #0E1826;
+    --paper-line: #2A3A54;
+    --card-bg:    #16223A;
+    --ink:        #EAF2FA;
+    --ink-soft:   #8DA0B8;
+    --amber-soft: #3A2E18;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  .theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 50;
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--card-bg); border: 1px solid var(--paper-line);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(34,49,66,0.1);
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .bubble-layer {
+    position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+  }
+  .bubble {
+    position: absolute; bottom: -60px;
+    animation: rise linear infinite;
+    filter: drop-shadow(0 2px 3px rgba(111,168,220,0.25));
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 0; }
+    8%   { opacity: 0.5; }
+    50%  { transform: translateY(-54vh) rotate(8deg) scale(1.05); }
+    92%  { opacity: 0.3; }
+    100% { transform: translateY(-108vh) rotate(-6deg) scale(1.15); opacity: 0; }
+  }
+  .mouse-bubble {
+    position: fixed; pointer-events: none; z-index: 1;
+    animation: float-up 1.1s ease-out forwards;
+  }
+  @keyframes float-up {
+    0%   { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    100% { transform: translate(-50%, -130px) scale(0.5) rotate(15deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bubble, .mouse-bubble { animation: none !important; display: none; }
+  }
+
+  .wrap {
+    position: relative; z-index: 2;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 48px 24px 96px;
+  }
+
+  a { color: var(--base); }
+  :focus-visible {
+    outline: 2px solid var(--base);
+    outline-offset: 3px;
+  }
+
+  /* ---------- Δείκτης pH: το "υπογραφικό" στοιχείο σχεδίασης ----------
+     Μια λεπτή γραμμή-διαχωριστικό εμπνευσμένη από δείκτη οξέος/βάσης.
+     Χρησιμοποιείται ως section-divider σε όλη τη σελίδα — δένει
+     οπτικά το θέμα (χημεία) με τη λειτουργία (feedback στο quiz). */
+  .indicator-rule {
+    height: 4px;
+    border-radius: 2px;
+    margin: 56px 0;
+    background: linear-gradient(90deg, var(--acid), var(--amber) 45%, var(--base) 100%);
+    opacity: 0.55;
+  }
+
+  /* ---------- Eyebrow / ετικέτα ενότητας ---------- */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .eyebrow .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--base);
+    flex-shrink: 0;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { padding-top: 8px; }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(30px, 5vw, 44px);
+    line-height: 1.12;
+    margin: 14px 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .hero .sub {
+    color: var(--ink-soft);
+    font-size: 17px;
+    max-width: 52ch;
+    margin: 0 0 20px;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--amber-soft);
+    color: #7A5A15;
+    border: 1px solid #EFDCA8;
+  }
+  .hero-figure {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* ---------- Ενότητες κειμένου ---------- */
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 24px;
+    margin: 0 0 14px;
+  }
+  p { margin: 0 0 14px; }
+
+  /* ---------- Κάρτες κανόνων ---------- */
+  .rules-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 20px 0 8px;
+  }
+  @media (max-width: 560px) { .rules-grid { grid-template-columns: 1fr; } }
+
+  .rule-card {
+    border: 1px solid var(--paper-line);
+    border-left: 3px solid var(--accent, var(--base));
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .rule-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px -8px var(--accent, var(--base)); }
+  .rules-grid .rule-card:nth-of-type(5n+1) { --accent: #6FA8DC; }
+  .rules-grid .rule-card:nth-of-type(5n+2) { --accent: #E49A98; }
+  .rules-grid .rule-card:nth-of-type(5n+3) { --accent: #E1B25C; }
+  .rules-grid .rule-card:nth-of-type(5n+4) { --accent: #7FB88A; }
+  .rules-grid .rule-card:nth-of-type(5n+5) { --accent: #A78BD8; }
+  .rule-card .num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent, var(--base));
+    display: block;
+    margin-bottom: 6px;
+  }
+  .rule-card p { margin: 0; font-size: 14.5px; color: var(--ink); }
+  .rule-card code {
+    font-family: var(--font-mono);
+    background: var(--base-soft);
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 13.5px;
+  }
+
+  .note-box {
+    border: 1px solid #E8CC8E;
+    background: var(--amber-soft);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 14px;
+    color: #7A5A15;
+    margin-top: 14px;
+  }
+  .note-box strong { color: #5C4310; }
+  .note-box .math { font-family: var(--font-mono); }
+
+  /* ---------- Παράδειγμα βήμα-βήμα (accordion) ---------- */
+  .example-box {
+    border: 1px solid var(--paper-line);
+    border-radius: var(--radius);
+    background: var(--card-bg);
+    padding: 20px 22px;
+  }
+  .formula {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    background: var(--ink);
+    color: var(--paper);
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .step {
+    border-top: 1px solid var(--paper-line);
+    padding: 14px 0;
+  }
+  .step:first-of-type { border-top: none; margin-top: 14px; }
+  .step-toggle {
+    all: unset;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 15px;
+    width: 100%;
+  }
+  .step-toggle .idx {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: #fff;
+    background: var(--base);
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-toggle .chevron {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+    color: var(--ink-soft);
+  }
+  .step[data-open="true"] .chevron { transform: rotate(90deg); }
+  .step-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+  }
+  .step[data-open="true"] .step-body { max-height: 200px; }
+  .step-body-inner { padding: 10px 0 4px 32px; }
+  .step-body-inner .math { font-family: var(--font-mono); color: var(--ink); }
+
+  /* ---------- Mini quiz ---------- */
+  .quiz-card {
+    border: 1px solid var(--paper-line);
+    border-radius: var(--radius);
+    background: var(--card-bg);
+    padding: 22px 22px 18px;
+    margin-bottom: 16px;
+  }
+  .quiz-progress {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  .quiz-progress span {
+    height: 4px;
+    flex: 1;
+    border-radius: 2px;
+    background: var(--paper-line);
+  }
+  .quiz-progress span.done { background: var(--base); }
+
+  .quiz-q { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+  .quiz-formula { font-family: var(--font-mono); color: var(--base); font-size: 15px; margin-bottom: 14px; }
+
+  .options {
+    display: grid;
+    gap: 8px;
+  }
+  .opt-btn {
+    text-align: left;
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--paper-line);
+    background: var(--paper);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .opt-btn:hover:not(:disabled) { border-color: var(--base); }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct { background: var(--base-soft); border-color: var(--base); }
+  .opt-btn.wrong { background: #FBEAEA; border-color: var(--acid); }
+
+  .feedback {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.ok   { background: var(--base-soft); color: #2B5A80; }
+  .feedback.miss { background: var(--amber-soft); color: #7A5A15; }
+
+  .next-btn {
+    all: unset;
+    margin-top: 14px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--base);
+    cursor: pointer;
+    display: none;
+  }
+  .next-btn.show { display: inline-block; }
+
+  footer {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  footer .next-topic {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink);
+    text-decoration: none;
+    border: 1px solid var(--paper-line);
+    padding: 8px 14px;
+    border-radius: 999px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<div class="bubble-layer" id="bubbleLayer">
+  <div class="bubble" style="left:6%; font-size:16px; animation-duration:14s; animation-delay:0s;">🧪</div>
+  <div class="bubble" style="left:14%; font-size:11px; animation-duration:10s; animation-delay:2s;">⚗️</div>
+  <div class="bubble" style="left:22%; font-size:20px; animation-duration:18s; animation-delay:1s;">🧪</div>
+  <div class="bubble" style="left:31%; font-size:13px; animation-duration:12s; animation-delay:4s;">⚗️</div>
+  <div class="bubble" style="left:40%; font-size:18px; animation-duration:15s; animation-delay:0.5s;">🧪</div>
+  <div class="bubble" style="left:49%; font-size:10px; animation-duration:9s; animation-delay:3s;">⚗️</div>
+  <div class="bubble" style="left:58%; font-size:19px; animation-duration:16s; animation-delay:2.5s;">🧪</div>
+  <div class="bubble" style="left:66%; font-size:13px; animation-duration:11s; animation-delay:5s;">⚗️</div>
+  <div class="bubble" style="left:74%; font-size:22px; animation-duration:19s; animation-delay:1.5s;">🧪</div>
+  <div class="bubble" style="left:82%; font-size:11px; animation-duration:10s; animation-delay:3.5s;">⚗️</div>
+  <div class="bubble" style="left:90%; font-size:17px; animation-duration:13s; animation-delay:0.8s;">🧪</div>
+  <div class="bubble" style="left:96%; font-size:10px; animation-duration:11s; animation-delay:4.5s;">⚗️</div>
+</div>
+<button class="theme-toggle" id="themeToggle" aria-label="Εναλλαγή σκούρου/ανοιχτού θέματος">🌙</button>
+<div class="wrap">
+
+  <!-- ================= HERO ================= -->
+  <div class="hero">
+    <span class="eyebrow"><span class="dot"></span>Κάψουλα 04 · Οξειδοαναγωγή</span>
+    <h1>Από αριθμό οξείδωσης μέχρι εξίσωση, ισοσταθμισμένη</h1>
+    <p class="sub">Χωρίς αποστήθιση πίνακα — οι κανόνες με τη σειρά που τους χρησιμοποιείς πραγματικά όταν λύνεις άσκηση, μέχρι το τέλος.</p>
+    <div class="meta-row">
+      <span class="chip">⏱ 6 λεπτά ανάγνωση</span>
+      <span class="chip">✓ 2 παραδείγματα</span>
+      <span class="chip">✓ 5 ερωτήσεις ελέγχου</span>
+    </div>
+
+    <div class="hero-figure">
+      <!-- Απλό χειροποίητο SVG: φιαλίδιο με δείκτη που αλλάζει χρώμα -->
+      <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M50 20V50L28 92C25 98 29 105 36 105H84C91 105 95 98 92 92L70 50V20"
+              stroke="#17241F" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M33 96C40 90 50 90 60 94C70 98 80 98 87 92L92 92C95 98 91 105 84 105H36C29 105 25 98 28 92L33 96Z"
+              fill="url(#grad)"/>
+        <line x1="42" y1="20" x2="78" y2="20" stroke="#17241F" stroke-width="3" stroke-linecap="round"/>
+        <defs>
+          <linearGradient id="grad" x1="28" y1="92" x2="92" y2="92" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#C0392E"/>
+            <stop offset="0.5" stop-color="#E1A53B"/>
+            <stop offset="1" stop-color="#2F6F63"/>
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <!-- ================= ΓΙΑΤΙ ================= -->
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Γιατί το χρειάζεσαι</span>
+    <h2>Είναι η βάση για όλη την οξειδοαναγωγή</h2>
+    <p>Αν δεν βρίσκεις σωστά τον αριθμό οξείδωσης (α.ο.), δεν μπορείς να εντοπίσεις ποιο στοιχείο οξειδώνεται και ποιο ανάγεται — κι αυτό εμφανίζεται σχεδόν σε κάθε θέμα Γ΄ Λυκείου που αφορά οξειδοαναγωγή, ισοστάθμιση εξισώσεων ή ηλεκτρόλυση.</p>
+  </section>
+
+  <!-- ================= ΟΙ ΚΑΝΟΝΕΣ (ΜΕΡΟΣ Α) ================= -->
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Μέρος Α · Αριθμός Οξείδωσης</span>
+    <h2>5 κανόνες, με σειρά προτεραιότητας</h2>
+    <div class="rules-grid">
+      <div class="rule-card">
+        <span class="num">01</span>
+        <p>Στοιχείο σε ελεύθερη κατάσταση (π.χ. <code>O₂</code>, <code>Fe</code>) → α.ο. <strong>= 0</strong></p>
+      </div>
+      <div class="rule-card">
+        <span class="num">02</span>
+        <p>Μονοατομικό ιόν → α.ο. = το <strong>φορτίο</strong> του ιόντος</p>
+      </div>
+      <div class="rule-card">
+        <span class="num">03</span>
+        <p>Οξυγόνο: συνήθως <strong>−2</strong> (εξαίρεση: υπεροξείδια −1)</p>
+      </div>
+      <div class="rule-card">
+        <span class="num">04</span>
+        <p>Υδρογόνο: συνήθως <strong>+1</strong> (με μέταλλα −1)</p>
+      </div>
+      <div class="rule-card" style="grid-column: 1 / -1;">
+        <span class="num">05</span>
+        <p>Το άθροισμα όλων των α.ο. σε ουδέτερο μόριο = <strong>0</strong>, σε ιόν = το <strong>φορτίο</strong> του ιόντος. Αυτός είναι ο κανόνας που λύνει την άγνωστη τιμή.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ΠΑΡΑΔΕΙΓΜΑ Α ================= -->
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Παράδειγμα</span>
+    <h2>Βρες τον α.ο. του Mn στο KMnO₄</h2>
+    <div class="example-box">
+      <span class="formula">KMnO₄</span>
+
+      <div class="step" data-open="true">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">1</span> Βάλε ό,τι ξέρεις ήδη <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            Κ (αλκάλιο) = <span class="math">+1</span> · Ο ×4 = <span class="math">4 × (−2) = −8</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">2</span> Εφάρμοσε τον κανόνα 05 <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            Ουδέτερο μόριο → άθροισμα = 0:<br>
+            <span class="math">(+1) + x + (−8) = 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">3</span> Λύσε ως προς x <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            <span class="math">x = +8 − 1 = +7</span> → ο Mn έχει α.ο. <strong>+7</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <!-- ================= QUIZ Α: ΑΡΙΘΜΟΣ ΟΞΕΙΔΩΣΗΣ ================= -->
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Γρήγορος έλεγχος</span>
+    <h2>3 ερωτήσεις — Αριθμός Οξείδωσης</h2>
+    <p>Η αιτιολόγηση κάθε απάντησης λύνεται σαν εξίσωση με άγνωστο x, ακριβώς όπως στο παράδειγμα παραπάνω.</p>
+
+    <div class="quiz-progress" id="quizProgressA">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div id="quizContainerA"></div>
+
+    <p id="quizDoneA" style="display:none; color:var(--base); font-weight:600;">
+      Ολοκλήρωσες τον έλεγχο αριθμού οξείδωσης. Συνέχισε στην εύρεση συντελεστών παρακάτω.
+    </p>
+  </section>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <!-- ================= ΟΙ ΚΑΝΟΝΕΣ (ΜΕΡΟΣ Β) ================= -->
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Μέρος Β · Εύρεση Συντελεστών</span>
+    <h2>Η μέθοδος μεταβολής αριθμού οξείδωσης</h2>
+    <p>Μόλις ξέρεις να βρίσκεις α.ο. (Μέρος Α), η ισοστάθμιση είναι απλά λογιστική — 3 βήματα, πάντα η ίδια σειρά.</p>
+    <div class="rules-grid">
+      <div class="rule-card" style="grid-column: 1 / -1;">
+        <span class="num">01</span>
+        <p>Βρες τα στοιχεία που <strong>οξειδώνονται</strong> (α.ο. ↑) και <strong>ανάγονται</strong> (α.ο. ↓), και υπολόγισε τη <strong>μεταβολή</strong> του αριθμού οξείδωσής τους.</p>
+      </div>
+      <div class="rule-card">
+        <span class="num">02</span>
+        <p><strong>Χιαστί:</strong> η μεταβολή του οξειδωτικού μπαίνει συντελεστής στο προϊόν του αναγωγικού, και η μεταβολή του αναγωγικού μπαίνει συντελεστής στο προϊόν του οξειδωτικού</p>
+      </div>
+      <div class="rule-card">
+        <span class="num">03</span>
+        <p>Ισοστάθμισε με κατάλληλους συντελεστές τα υπόλοιπα στοιχεία. Αν προκύπτει διαφορά στα άτομα Η, πρόσθεσε κατάλληλα μόρια <strong>H₂O</strong> στο μέλος που χρειάζεται.</p>
+      </div>
+    </div>
+
+    <div class="note-box">
+      ⚠️ <strong>Προσοχή:</strong> Αν οι μεταβολές των α.ο. έχουν κοινό διαιρέτη, απλοποίησέ τες πριν εφαρμόσεις το χιαστί.<br>
+      Παράδειγμα: <span class="math">S + 2HNO₃(αρ.) → H₂SO₄ + 2NO</span> — Δ(S)=6, Δ(N)=3 → απλοποιούνται σε 2 και 1, οπότε οι συντελεστές είναι <strong>1</strong> και <strong>2</strong>, όχι 3 και 6.
+    </div>
+
+    <div class="note-box">
+      ⚠️ <strong>Προσοχή:</strong> Αν το στοιχείο που οξειδώνεται ή ανάγεται έχει <strong>δείκτη</strong> στο προϊόν του (π.χ. N₂, Cl₂), διαίρεσε τον συντελεστή που βρήκες από το χιαστί με αυτόν τον δείκτη. Αν προκύψει κλάσμα, διπλασίασε και τις δύο μεταβολές και ξεκίνα την ισοστάθμιση από την αρχή.<br>
+      Παράδειγμα: <span class="math">2NH₃ + 3CuO → N₂ + 3Cu + 3H₂O</span> — το χιαστί δίνει συντελεστή 2 για το N₂, αλλά το N₂ έχει δείκτη 2, άρα <strong>2 ÷ 2 = 1</strong>.
+    </div>
+  </section>
+
+  <!-- ================= ΠΑΡΑΔΕΙΓΜΑ Β ================= -->
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Παράδειγμα</span>
+    <h2>Ισοστάθμισε: Cu + HNO₃ → Cu(NO₃)₂ + NO + H₂O</h2>
+    <div class="example-box">
+      <span class="formula">Cu + HNO₃ → Cu(NO₃)₂ + NO + H₂O</span>
+
+      <div class="step" data-open="true">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">1</span> Ποιο οξειδώνεται/ανάγεται, και η μεταβολή <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            Cu: <span class="math">0 → +2</span> (οξειδώνεται, μεταβολή 2) · N: <span class="math">+5 → +2</span> (ανάγεται, μεταβολή 3)
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">2</span> Χιαστί: βρες τους συντελεστές <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            Δ(οξειδωτικού, N) = 3 → συντελεστής στο <span class="math">Cu(NO₃)₂</span> (προϊόν αναγωγικού)<br>
+            Δ(αναγωγικού, Cu) = 2 → συντελεστής στο <span class="math">NO</span> (προϊόν οξειδωτικού)
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">3</span> Ισοστάθμισε τα υπόλοιπα στοιχεία <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            Cu (αντιδρών) = 3, ίδιο με το προϊόν · N συνολικά δεξιά = 3×2 + 2 = 8 → <span class="math">8 HNO₃</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">4</span> Πρόσθεσε H₂O όπου χρειάζεται <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            8 άτομα Η αριστερά, μόνο το H₂O τα έχει δεξιά →<br>
+            <span class="math">3Cu + 8HNO₃ → 3Cu(NO₃)₂ + 2NO + 4H₂O</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <!-- ================= QUIZ Β: ΕΥΡΕΣΗ ΣΥΝΤΕΛΕΣΤΩΝ ================= -->
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Γρήγορος έλεγχος</span>
+    <h2>2 ερωτήσεις — Εύρεση Συντελεστών</h2>
+
+    <div class="quiz-progress" id="quizProgressB">
+      <span></span><span></span>
+    </div>
+
+    <div id="quizContainerB"></div>
+
+    <p id="quizDoneB" style="display:none; color:var(--base); font-weight:600;">
+      Ολοκλήρωσες την κάψουλα οξειδοαναγωγής. Πήγαινε στην επόμενη όποτε θες.
+    </p>
+  </section>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <footer>
+    <span>Φτιαγμένο με 💙 από μια φοιτήτρια</span>
+    <a class="next-topic" href="#">Επόμενη κάψουλα: Στοιχειομετρία →</a>
+  </footer>
+
+</div>
+
+<script>
+  /* ---------- Accordion βημάτων παραδείγματος ---------- */
+  function toggleStep(btn) {
+    const step = btn.closest('.step');
+    const isOpen = step.getAttribute('data-open') === 'true';
+    step.setAttribute('data-open', isOpen ? 'false' : 'true');
+  }
+
+  /* ----------------------------------------------------------------
+     ΔΕΔΟΜΕΝΑ QUIZ — δύο ξεχωριστοί πίνακες, ένας ανά ενότητα.
+     Στο quiz Α, το "insight" είναι η εξίσωση με x — η ίδια λογική
+     αιτιολόγησης όπως στο παράδειγμα του KMnO₄ παραπάνω.
+     ---------------------------------------------------------------- */
+  const questionsA = [
+    {
+      prompt: "Ποιος είναι ο α.ο. του S στο H₂SO₄;",
+      options: ["+4", "+6", "−2", "+2"],
+      correct: 1,
+      insight: "Εξίσωση: 2(+1) + x + 4(−2) = 0 → x = +6. (Το +4 είναι το α.ο. του S στο SO₂, όχι εδώ.)"
+    },
+    {
+      prompt: "Ποιος είναι ο α.ο. του Cr στο Cr₂O₇²⁻;",
+      options: ["+3", "+6", "+7", "+2"],
+      correct: 1,
+      insight: "Εξίσωση (ιόν, δύο άτομα Cr): 2x + 7(−2) = −2 → 2x = 12 → x = +6."
+    },
+    {
+      prompt: "Ποιος είναι ο α.ο. του N στο NH₄⁺;",
+      options: ["+3", "−3", "+5", "−1"],
+      correct: 1,
+      insight: "Εξίσωση: x + 4(+1) = +1 → x = −3. Το Η είναι λιγότερο ηλεκτραρνητικό, γι' αυτό το N γίνεται αρνητικό εδώ."
+    }
+  ];
+
+  const questionsB = [
+    {
+      prompt: "Στο Cu + HNO₃ → Cu(NO₃)₂ + NO + H₂O, ποια είναι η μεταβολή του αριθμού οξείδωσης του Cu;",
+      options: ["1", "2", "3", "4"],
+      correct: 1,
+      insight: "Το Cu πάει από α.ο. 0 σε +2 — η μεταβολή είναι η απόλυτη διαφορά των δύο τιμών (2), όχι το τελικό α.ο. από μόνο του."
+    },
+    {
+      prompt: "Με τη μέθοδο του χιαστί, η μεταβολή του αναγωγικού σώματος μπαίνει συντελεστής σε ποιο προϊόν;",
+      options: ["Στο δικό του προϊόν", "Στο προϊόν του οξειδωτικού", "Μόνο στο H₂O", "Σε όλα τα προϊόντα εξίσου"],
+      correct: 1,
+      insight: "Χιαστί σημαίνει ακριβώς αυτό: η μεταβολή του ενός σώματος πηγαίνει στο προϊόν του άλλου — του αναγωγικού στο προϊόν του οξειδωτικού, και αντίστροφα."
+    }
+  ];
+
+  /* ---------- Γενική συνάρτηση quiz — δουλεύει με οποιαδήποτε
+     λίστα ερωτήσεων + τα δικά της ids container/progress/done ---------- */
+  function initQuiz(questions, containerId, progressId, doneId) {
+    let current = 0;
+    const container = document.getElementById(containerId);
+    const progressEl = document.getElementById(progressId);
+
+    function renderQuestion(i) {
+      const q = questions[i];
+      container.innerHTML = `
+        <div class="quiz-card">
+          <div class="quiz-q">Ερώτηση ${i + 1}</div>
+          <div class="quiz-formula">${q.prompt}</div>
+          <div class="options">
+            ${q.options.map((opt, idx) => `<button class="opt-btn" data-idx="${idx}">${opt}</button>`).join('')}
+          </div>
+          <div class="feedback" id="${containerId}-feedback"></div>
+          <button class="next-btn" id="${containerId}-nextBtn">Επόμενη ερώτηση →</button>
+        </div>
+      `;
+
+      container.querySelectorAll('.opt-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleAnswer(btn, q));
+      });
+    }
+
+    function handleAnswer(btn, q) {
+      const chosen = parseInt(btn.dataset.idx);
+      const buttons = container.querySelectorAll('.opt-btn');
+      buttons.forEach(b => b.disabled = true);
+
+      buttons[q.correct].classList.add('correct');
+      if (chosen !== q.correct) btn.classList.add('wrong');
+
+      const feedback = document.getElementById(`${containerId}-feedback`);
+      if (chosen === q.correct) {
+        feedback.className = 'feedback show ok';
+        feedback.textContent = 'Σωστά. ' + q.insight;
+      } else {
+        feedback.className = 'feedback show miss';
+        feedback.textContent = 'Όχι ακριβώς — ' + q.insight;
+      }
+
+      progressEl.children[current].classList.add('done');
+
+      if (current < questions.length - 1) {
+        const nextBtn = document.getElementById(`${containerId}-nextBtn`);
+        nextBtn.classList.add('show');
+        nextBtn.addEventListener('click', () => {
+          current++;
+          renderQuestion(current);
+        });
+      } else {
+        document.getElementById(doneId).style.display = 'block';
+      }
+    }
+
+    renderQuestion(current);
+  }
+
+  initQuiz(questionsA, 'quizContainerA', 'quizProgressA', 'quizDoneA');
+  initQuiz(questionsB, 'quizContainerB', 'quizProgressB', 'quizDoneB');
+</script>
+
+<script>
+  let lastSpawn = 0;
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastSpawn < 70) return;
+      lastSpawn = now;
+      const size = 12 + Math.random() * 8;
+      const b = document.createElement('div');
+      b.className = 'mouse-bubble';
+      b.style.fontSize = size + 'px';
+      b.style.left = e.clientX + 'px';
+      b.style.top = e.clientY + 'px';
+      b.textContent = Math.random() < 0.5 ? '🧪' : '⚗️';
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 1100);
+    });
+  }
+
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  });
+</script>
+
+</body>
+</html>

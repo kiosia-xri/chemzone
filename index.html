@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Χημεία Γ' Λυκείου — χωρίς κούραση</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper:      #E1EDF8;
+    --paper-line: #D6E6F2;
+    --card-bg:    #FFFFFF;
+    --ink:        #223142;
+    --ink-soft:   #64798D;
+    --acid:       #E49A98;
+    --base:       #6FA8DC;
+    --base-soft:  #DCEEFB;
+    --amber:      #F0CB86;
+    --amber-soft: #FBF3E0;
+    --radius:     14px;
+    --font-display: "Fraunces", serif;
+    --font-body:    "IBM Plex Sans", sans-serif;
+    --font-mono:    "IBM Plex Mono", monospace;
+  }
+  body.dark {
+    --paper:      #0E1826;
+    --paper-line: #2A3A54;
+    --card-bg:    #16223A;
+    --ink:        #EAF2FA;
+    --ink-soft:   #8DA0B8;
+    --amber-soft: #3A2E18;
+  }
+
+  * { box-sizing: border-box; }
+
+  .theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 50;
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--card-bg); border: 1px solid var(--paper-line);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(34,49,66,0.1);
+  }
+
+  /* ---------- Πλαϊνό μενού (hamburger) ---------- */
+  .menu-btn {
+    position: fixed; top: 18px; left: 18px; z-index: 50;
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--card-bg); border: 1px solid var(--paper-line);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(34,49,66,0.1);
+  }
+  .menu-btn span { width: 20px; height: 2px; background: var(--ink); border-radius: 2px; }
+
+  .drawer-overlay {
+    position: fixed; inset: 0; background: rgba(20,30,42,0.35);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease; z-index: 60;
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: 270px; max-width: 82vw;
+    background: var(--card-bg); box-shadow: -6px 0 24px rgba(20,30,42,0.15);
+    transform: translateX(100%); transition: transform 0.3s ease; z-index: 61;
+    padding: 24px 20px; overflow-y: auto;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-close {
+    all: unset; float: right; cursor: pointer; font-size: 18px; color: var(--ink-soft);
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border-radius: 8px;
+  }
+  .drawer-close:hover { background: var(--paper); }
+  .drawer-title {
+    font-family: var(--font-display); font-weight: 600; font-size: 17px;
+    margin: 4px 0 20px; clear: both;
+  }
+  .drawer-link {
+    display: block; padding: 14px 14px; border-radius: 10px; margin-bottom: 8px;
+    color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14.5px;
+    border: 1px solid var(--paper-line); transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .drawer-link:hover { border-color: var(--base); background: var(--base-soft); }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .wrap { position: relative; z-index: 2; }
+
+  :focus-visible { outline: 2px solid var(--base); outline-offset: 3px; }
+  a { color: var(--base); }
+
+  .wrap { max-width: 1140px; margin: 0 auto; padding: 56px 32px 100px; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 12.5px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--base); }
+
+  /* ---------- Hero ---------- */
+  .hero-row {
+    display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+  }
+  .hero-text { flex: 1; min-width: 260px; }
+  .titration-scene { flex-shrink: 0; width: 130px; }
+  @media (max-width: 640px) { .titration-scene { width: 100px; margin: 0 auto; } }
+
+  .titration-drop { display: none; }
+  .orbit-spin { transform-origin: 60px 100px; animation: spin 4s linear infinite; }
+  .orbit-spin.rev { animation-direction: reverse; }
+  .orbit-spin.slow { animation-duration: 5.5s; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .titration-drop, .titration-liquid, .titration-ripple, .ph-color, .orbit-spin { animation: none !important; }
+  }
+
+  .hero-band { position: relative; overflow: hidden; }
+  .hero-bg {
+    position: absolute; top: 0; left: 50%; width: 100vw; height: 100%;
+    transform: translateX(-50%); z-index: 0; pointer-events: none;
+  }
+  .hero-bg svg { width: 100%; height: 100%; display: block; }
+  .hero, .hero-band > .indicator-rule { position: relative; z-index: 1; }
+  .hero-band > .indicator-rule { margin-top: 90px; }
+
+  .hero-band .hero > h1 { margin: 0 auto 22px; text-align: center; }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(32px, 5.5vw, 50px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 16px 0 14px;
+    max-width: 14ch;
+  }
+  .hero .sub {
+    color: var(--ink-soft);
+    font-size: 17.5px;
+    max-width: 56ch;
+    margin: 0 0 28px;
+  }
+  .hero .sub strong { color: var(--ink); }
+
+  .principles {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 8px;
+  }
+  .principle {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: var(--card-bg);
+    border: 1px solid var(--paper-line);
+    color: var(--ink-soft);
+  }
+
+  .progress-row {
+    display: flex; align-items: center; gap: 10px; margin: 18px 0 8px;
+  }
+  .test-tube {
+    position: relative; width: 16px; height: 34px;
+    border: 2px solid var(--ink); border-top: none;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden; flex-shrink: 0; background: #fff;
+  }
+  .test-tube .liquid {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(180deg, var(--base), #4A87BE);
+    height: 0%;
+    transition: height 0.8s ease;
+  }
+  .progress-text {
+    font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft);
+  }
+  .progress-text strong { color: var(--ink); }
+
+  .indicator-rule {
+    height: 4px; border-radius: 2px; margin: 52px 0;
+    background: linear-gradient(90deg, var(--acid), var(--amber) 45%, var(--base) 100%);
+    opacity: 0.55;
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 23px; margin: 0 0 4px;
+  }
+  .section-note { color: var(--ink-soft); font-size: 14.5px; margin: 0 0 22px; }
+
+  /* ---------- Grid κεφαλαίων ---------- */
+  .chapters-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 640px) { .chapters-grid { grid-template-columns: 1fr; } }
+  @media (min-width: 900px) { .chapters-grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .chapter-card {
+    position: relative;
+    border-radius: var(--radius);
+    border: 1px solid var(--paper-line);
+    background: var(--card-bg);
+    padding: 20px 20px 18px;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+    overflow: hidden;
+  }
+  #mainChaptersGrid .chapter-card.ready::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: var(--accent, var(--base));
+  }
+  .chapter-card.ready {
+    transition: border-color 0.2s ease, transform 0.2s cubic-bezier(.34,1.56,.64,1), background-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 3px 14px -6px color-mix(in srgb, var(--accent, var(--base)) 55%, transparent);
+  }
+  .chapter-card.ready:hover {
+    border-color: var(--accent, var(--base));
+    transform: translateY(-5px) scale(1.02);
+    background: var(--base-soft);
+    box-shadow:
+      0 4px 10px -2px color-mix(in srgb, var(--accent, var(--base)) 75%, transparent),
+      0 20px 40px -10px color-mix(in srgb, var(--accent, var(--base)) 60%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--accent, var(--base)) 22%, transparent);
+  }
+  .chapter-card.ready:active {
+    transform: translateY(-1px) scale(0.98);
+    background: var(--base-soft);
+    border-color: var(--accent, var(--base));
+    box-shadow:
+      0 4px 10px -2px color-mix(in srgb, var(--accent, var(--base)) 75%, transparent),
+      0 20px 40px -10px color-mix(in srgb, var(--accent, var(--base)) 60%, transparent),
+      0 0 0 4px color-mix(in srgb, var(--accent, var(--base)) 22%, transparent);
+  }
+  .chapter-card.soon {
+    cursor: default;
+    opacity: 0.6;
+    filter: grayscale(0.35);
+  }
+
+  #mainChaptersGrid .chapter-card.ready:nth-of-type(5n+1) { --accent: #6FA8DC; }
+  #mainChaptersGrid .chapter-card.ready:nth-of-type(5n+2) { --accent: #E49A98; }
+  #mainChaptersGrid .chapter-card.ready:nth-of-type(5n+3) { --accent: #E1B25C; }
+  #mainChaptersGrid .chapter-card.ready:nth-of-type(5n+4) { --accent: #7FB88A; }
+  #mainChaptersGrid .chapter-card.ready:nth-of-type(5n+5) { --accent: #A78BD8; }
+  #mainChaptersGrid .chapter-card.ready::after {
+    content: '🧪';
+    position: absolute; top: 14px; right: 16px; font-size: 15px;
+  }
+  #mainChaptersGrid .chapter-card.soon::after {
+    content: '🔒';
+    position: absolute; top: 14px; right: 16px; font-size: 13px; opacity: 0.7;
+  }
+
+  .chapter-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--base);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .chapter-card.soon .chapter-num { color: var(--ink-soft); }
+
+  .chapter-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 18.5px;
+    margin: 0 0 8px;
+    line-height: 1.25;
+  }
+
+  .chapter-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .tag.done { background: var(--base-soft); color: #2B5A80; }
+  .tag.soon { background: var(--amber-soft); color: #7A5A15; }
+
+  .chapter-desc { font-size: 13.5px; color: var(--ink-soft); margin: 0; }
+
+  /* ---------- Γιατί όχι φροντιστήριο ---------- */
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 720px) { .why-grid { grid-template-columns: 1fr; } }
+  .why-card {
+    border: 1px solid var(--paper-line);
+    border-radius: var(--radius);
+    padding: 18px;
+    background: #fff;
+  }
+  .why-card .icon { font-size: 20px; margin-bottom: 10px; display: block; }
+  .why-card h3 { font-family: var(--font-body); font-size: 15px; margin: 0 0 6px; }
+  .why-card p { font-size: 13.5px; color: var(--ink-soft); margin: 0; }
+
+  /* ---------- Πρόταση κάψουλας ---------- */
+  .suggest-box {
+    border: 1px dashed var(--paper-line);
+    border-radius: var(--radius);
+    padding: 24px 26px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .suggest-box p { margin: 0; max-width: 44ch; font-size: 14.5px; color: var(--ink-soft); }
+  .suggest-btn {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 11px 20px;
+    border-radius: 999px;
+    background: var(--base);
+    color: #fff;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  footer {
+    margin-top: 60px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 10px;
+    font-size: 13px; color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Εναλλαγή σκούρου/ανοιχτού θέματος">🌙</button>
+<button class="menu-btn" id="menuBtn" aria-label="Άνοιγμα μενού">
+  <span></span><span></span><span></span>
+</button>
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<nav class="drawer" id="drawer">
+  <button class="drawer-close" id="drawerClose" aria-label="Κλείσιμο μενού">✕</button>
+  <div class="drawer-title">Κατηγορίες</div>
+  <a class="drawer-link" href="sxetika-me-emena.html">Σχετικά με εμένα</a>
+  <a class="drawer-link" href="panellinies-thermata.html">Πανελλήνιες</a>
+  <a class="drawer-link" href="#">Επαναληπτικές</a>
+  <a class="drawer-link" href="#">Ερωτήσεις</a>
+</nav>
+
+<div class="wrap">
+
+  <div class="hero-band">
+    <div class="hero-bg" aria-hidden="true">
+      <svg viewBox="0 0 1600 460" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+        <g fill="none" stroke="#6FA8DC" stroke-width="3" opacity="0.16">
+          <!-- ράφι -->
+          <line x1="0" y1="420" x2="1600" y2="420"/>
+          <!-- κωνική φιάλη -->
+          <path d="M120 300 L120 330 L90 405 Q86 416 98 416 L162 416 Q174 416 170 405 L140 330 L140 300 Z"/>
+          <!-- ποτήρι ζέσεως -->
+          <path d="M260 340 L256 416 Q255 420 260 420 L330 420 Q335 420 334 416 L330 340 Z"/>
+          <line x1="256" y1="360" x2="334" y2="360"/>
+          <!-- δοκιμαστικοί σωλήνες σε βάση -->
+          <path d="M430 300 L430 400 Q430 416 446 416 Q462 416 462 400 L462 300"/>
+          <path d="M480 320 L480 400 Q480 416 496 416 Q512 416 512 400 L512 320"/>
+          <path d="M530 300 L530 400 Q530 416 546 416 Q562 416 562 400 L562 300"/>
+          <rect x="415" y="416" width="162" height="10" rx="2"/>
+          <!-- μόριο (κύκλοι + γραμμές) -->
+          <circle cx="700" cy="360" r="14"/>
+          <circle cx="750" cy="330" r="10"/>
+          <circle cx="750" cy="390" r="10"/>
+          <line x1="712" y1="355" x2="742" y2="335"/>
+          <line x1="712" y1="366" x2="742" y2="385"/>
+          <!-- κωνική φιάλη μεγάλη -->
+          <path d="M860 280 L860 320 L815 410 Q810 420 822 420 L918 420 Q930 420 925 410 L880 320 L880 280 Z"/>
+          <line x1="850" y1="280" x2="890" y2="280"/>
+          <!-- microscope-ish σχήμα -->
+          <path d="M1020 416 L1020 380 Q1020 360 1040 355 L1055 340"/>
+          <circle cx="1058" cy="336" r="9"/>
+          <rect x="995" y="410" width="60" height="10" rx="2"/>
+          <!-- ποτήρι ζέσεως μικρό -->
+          <path d="M1150 350 L1147 416 Q1146 420 1151 420 L1205 420 Q1210 420 1209 416 L1206 350 Z"/>
+          <!-- δύο μόρια-φούσκες -->
+          <circle cx="1320" cy="380" r="12"/>
+          <circle cx="1355" cy="355" r="7"/>
+          <!-- κωνική φιάλη -->
+          <path d="M1440 310 L1440 335 L1408 405 Q1404 416 1416 416 L1474 416 Q1486 416 1482 405 L1450 335 L1450 310 Z"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hero">
+    <h1>Καλώς ήρθες στον κόσμο της χημείας ✨</h1>
+    <div class="hero-row">
+      <div class="hero-text">
+        <span class="eyebrow"><span class="dot"></span>Χημεία Γ' Λυκείου</span>
+        <p class="sub">Εδώ μαθαίνουμε, λύνουμε και... αντιδρούμε ψύχραιμα 😂🥼</p>
+        <div class="principles">
+          <span class="principle">Χωρίς login</span>
+          <span class="principle">Χωρίς κατάταξη/streaks</span>
+          <span class="principle">Ευθυγραμμισμένο με την επίσημη ύλη</span>
+        </div>
+
+        <div class="progress-row">
+          <div class="test-tube"><div class="liquid" id="progressLiquid"></div></div>
+          <span class="progress-text" id="progressText">Φόρτωση προόδου…</span>
+        </div>
+      </div>
+
+      <div class="titration-scene">
+        <svg viewBox="0 0 120 200" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <g transform="rotate(0 60 100)">
+            <g class="orbit-spin">
+              <ellipse cx="60" cy="100" rx="46" ry="17" fill="none" stroke="#6FA8DC" stroke-width="1.6" opacity="0.6"/>
+              <circle cx="106" cy="100" r="4.5" fill="#6FA8DC"/>
+            </g>
+          </g>
+          <g transform="rotate(60 60 100)">
+            <g class="orbit-spin rev">
+              <ellipse cx="60" cy="100" rx="46" ry="17" fill="none" stroke="#E49A98" stroke-width="1.6" opacity="0.6"/>
+              <circle cx="106" cy="100" r="4.5" fill="#E49A98"/>
+            </g>
+          </g>
+          <g transform="rotate(120 60 100)">
+            <g class="orbit-spin slow">
+              <ellipse cx="60" cy="100" rx="46" ry="17" fill="none" stroke="#F0CB86" stroke-width="1.6" opacity="0.6"/>
+              <circle cx="106" cy="100" r="4.5" fill="#F0CB86"/>
+            </g>
+          </g>
+          <circle cx="60" cy="100" r="11" fill="var(--ink)"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="indicator-rule" role="separator"></div>
+  </div>
+
+  <!-- ================= ΥΛΗ ================= -->
+  <section>
+    <h2>Η ύλη, σε κεφάλαια</h2>
+    <p class="section-note">Ξεκινάμε από τα κεφάλαια που δυσκολεύουν τους περισσότερους — τα υπόλοιπα προστίθενται σταδιακά.</p>
+
+    <div class="chapters-grid" id="mainChaptersGrid">
+      <a class="chapter-card ready" href="kapsoula-oxeidoanagogi.html">
+        <span class="chapter-num">01</span>
+        <h3 class="chapter-title">Οξειδοαναγωγή</h3>
+        <p class="chapter-desc">Αριθμοί οξείδωσης, εύρεση συντελεστών, οξειδωτικά/αναγωγικά.</p>
+        <div class="chapter-tags">
+          <span class="tag done">Κάψουλα</span>
+          <span class="tag done">2 παραδείγματα</span>
+          <span class="tag done">Quiz</span>
+        </div>
+      </a>
+
+      <a class="chapter-card ready" href="flashcards-hlektroniki-domi.html">
+        <span class="chapter-num">00</span>
+        <h3 class="chapter-title">Υπενθύμιση: Ηλεκτρονική Δομή</h3>
+        <p class="chapter-desc">Βάση από Α' Λυκείου — για όσους τη χρειάζονται πριν ξεκινήσουν.</p>
+        <div class="chapter-tags">
+          <span class="tag done">Flashcards</span>
+        </div>
+      </a>
+
+      <a class="chapter-card ready" href="kapsoula-thermochimia.html">
+        <span class="chapter-num">02</span>
+        <h3 class="chapter-title">Θερμοχημεία</h3>
+        <p class="chapter-desc">Ενθαλπία, εξώθερμες/ενδόθερμες, νόμος Hess.</p>
+        <div class="chapter-tags">
+          <span class="tag done">Κάψουλα</span>
+          <span class="tag done">Quiz</span>
+        </div>
+      </a>
+
+      <a class="chapter-card ready" href="kapsoula-kinitiki.html">
+        <span class="chapter-num">03</span>
+        <h3 class="chapter-title">Χημική Κινητική</h3>
+        <p class="chapter-desc">Παράγοντες που επηρεάζουν την ταχύτητα, μέση ταχύτητα αντίδρασης.</p>
+        <div class="chapter-tags">
+          <span class="tag done">Κάψουλα</span>
+          <span class="tag done">Quiz</span>
+        </div>
+      </a>
+
+      <a class="chapter-card ready" href="paixnidi-le-chatelier.html">
+        <span class="chapter-num">04</span>
+        <h3 class="chapter-title">Χημική Ισορροπία</h3>
+        <p class="chapter-desc">Ξεκίνα με το παιχνίδι Le Chatelier — η θεωρία έρχεται σύντομα.</p>
+        <div class="chapter-tags">
+          <span class="tag done">Παιχνίδι</span>
+        </div>
+      </a>
+
+      <div class="chapter-card soon">
+        <span class="chapter-num">05</span>
+        <h3 class="chapter-title">Οξέα – Βάσεις &amp; Ιοντική Ισορροπία</h3>
+        <p class="chapter-desc">Ισχυρά/ασθενή, υπολογισμοί pH, ρυθμιστικά διαλύματα.</p>
+        <div class="chapter-tags"><span class="tag soon">Έρχεται</span></div>
+      </div>
+
+      <a class="chapter-card ready" href="mindmap-organiki.html">
+        <span class="chapter-num">07</span>
+        <h3 class="chapter-title">Οργανική Χημεία</h3>
+        <p class="chapter-desc">Mind map των 5 τύπων αντιδράσεων + quiz αναγνώρισης.</p>
+        <div class="chapter-tags">
+          <span class="tag done">Mind Map</span>
+          <span class="tag done">Quiz</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <!-- ================= ΤΙ ΜΑΣ ΚΑΝΕΙ ΔΙΑΦΟΡΕΤΙΚΟΥΣ ================= -->
+  <section>
+    <h2>🧪 Τι κάνει τη σελίδα διαφορετική;</h2>
+    <div class="chapters-grid">
+      <div class="chapter-card ready">
+        <h3 class="chapter-title">Γρήγορη επανάληψη</h3>
+        <span class="chapter-num">⏱️ Όταν έχεις μόνο 5 λεπτά</span>
+        <p class="chapter-desc">Μικρές και ξεκάθαρες επαναλήψεις για εκείνες τις στιγμές που θες να θυμηθείς κάτι γρήγορα — ακόμα και στο λεωφορείο.</p>
+      </div>
+      <div class="chapter-card ready">
+        <h3 class="chapter-title">Χωρίς πίεση</h3>
+        <span class="chapter-num">😌 Διάβασε με τον δικό σου ρυθμό</span>
+        <p class="chapter-desc">Δεν υπάρχουν χρονόμετρα, άγχος ή «πρέπει να τελειώσεις σήμερα». Μπαίνεις, βρίσκεις αυτό που ψάχνεις και συνεχίζεις.</p>
+      </div>
+      <div class="chapter-card ready">
+        <h3 class="chapter-title">Μαζί με την ύλη</h3>
+        <span class="chapter-num">📖 Πάντα σύμφωνα με την ύλη</span>
+        <p class="chapter-desc">Η σελίδα είναι φτιαγμένη με βάση την τρέχουσα ύλη της Γ' Λυκείου και ανανεώνεται όταν χρειάζεται. Για να διαβάζεις αυτά που πραγματικά χρειάζεσαι.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <!-- ================= ΠΡΟΤΑΣΗ ================= -->
+  <section>
+    <div class="suggest-box">
+      <p>Λείπει κάτι που θα σε βοηθούσε; Πες μου ποιο κεφάλαιο να φτιάξω πρώτο.</p>
+      <a class="suggest-btn" href="mailto:#">Πρότεινε κάψουλα →</a>
+    </div>
+  </section>
+
+  <footer>
+    <span>Χτίζεται σταδιακά, κεφάλαιο-κεφάλαιο.</span>
+    <span>Φτιαγμένο με 💙 από μια φοιτήτρια</span>
+  </footer>
+
+</div>
+
+<script>
+  const grid = document.getElementById('mainChaptersGrid');
+  const ready = grid.querySelectorAll('.chapter-card.ready').length;
+  const total = grid.querySelectorAll('.chapter-card').length;
+  const pct = total ? Math.round((ready / total) * 100) : 0;
+  document.getElementById('progressLiquid').style.height = pct + '%';
+  document.getElementById('progressText').innerHTML =
+    `<strong>${ready} από ${total}</strong> κεφάλαια ξεκλειδωμένα`;
+
+  /* ---------- Πλαϊνό μενού ---------- */
+  const menuBtn = document.getElementById('menuBtn');
+  const drawer = document.getElementById('drawer');
+  const drawerOverlay = document.getElementById('drawerOverlay');
+  const drawerClose = document.getElementById('drawerClose');
+
+  function openDrawer() { drawer.classList.add('open'); drawerOverlay.classList.add('open'); }
+  function closeDrawer() { drawer.classList.remove('open'); drawerOverlay.classList.remove('open'); }
+
+  menuBtn.addEventListener('click', openDrawer);
+  drawerClose.addEventListener('click', closeDrawer);
+  drawerOverlay.addEventListener('click', closeDrawer);
+
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  });
+</script>
+</body>
+</html>

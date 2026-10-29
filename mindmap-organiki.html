@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Map — Τύποι Αντιδράσεων Οργανικής Χημείας</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper:      #E1EDF8;
+    --paper-line: #D6E6F2;
+    --card-bg:    #FFFFFF;
+    --ink:        #223142;
+    --ink-soft:   #64798D;
+    --acid:       #E49A98;
+    --base:       #6FA8DC;
+    --base-soft:  #DCEEFB;
+    --amber:      #F0CB86;
+    --amber-soft: #FBF3E0;
+    --radius:     14px;
+    --font-display: "Fraunces", serif;
+    --font-body:    "IBM Plex Sans", sans-serif;
+    --font-mono:    "IBM Plex Mono", monospace;
+  }
+  body.dark {
+    --paper:      #0E1826;
+    --paper-line: #2A3A54;
+    --card-bg:    #16223A;
+    --ink:        #EAF2FA;
+    --ink-soft:   #8DA0B8;
+    --amber-soft: #3A2E18;
+  }
+
+  * { box-sizing: border-box; }
+
+  .theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 50;
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--card-bg); border: 1px solid var(--paper-line);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(34,49,66,0.1);
+  }
+
+  body {
+    margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body);
+    line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .bubble-layer {
+    position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+  }
+  .bubble {
+    position: absolute; bottom: -60px;
+    animation: rise linear infinite;
+    filter: drop-shadow(0 2px 3px rgba(111,168,220,0.25));
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 0; }
+    8%   { opacity: 0.5; }
+    50%  { transform: translateY(-54vh) rotate(8deg) scale(1.05); }
+    92%  { opacity: 0.3; }
+    100% { transform: translateY(-108vh) rotate(-6deg) scale(1.15); opacity: 0; }
+  }
+  .mouse-bubble {
+    position: fixed; pointer-events: none; z-index: 1;
+    animation: float-up 1.1s ease-out forwards;
+  }
+  @keyframes float-up {
+    0%   { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    100% { transform: translate(-50%, -130px) scale(0.5) rotate(15deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bubble, .mouse-bubble { animation: none !important; display: none; }
+  }
+
+  .wrap { position: relative; z-index: 2; max-width: 760px; margin: 0 auto; padding: 48px 24px 96px; }
+  :focus-visible { outline: 2px solid var(--base); outline-offset: 3px; }
+  a { color: var(--base); }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono);
+    font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--base); }
+
+  h1 {
+    font-family: var(--font-display); font-weight: 600; font-size: clamp(24px, 4.2vw, 32px);
+    line-height: 1.2; margin: 14px 0 10px;
+  }
+  .sub { color: var(--ink-soft); font-size: 15.5px; margin: 0 0 40px; max-width: 54ch; }
+
+  .indicator-rule {
+    height: 4px; border-radius: 2px; margin: 48px 0;
+    background: linear-gradient(90deg, var(--acid), var(--amber) 45%, var(--base) 100%);
+    opacity: 0.55;
+  }
+
+  .central-node {
+    width: fit-content; margin: 0 auto; background: var(--ink); color: var(--paper);
+    font-family: var(--font-display); font-weight: 600; font-size: 16px;
+    padding: 14px 26px; border-radius: 999px; text-align: center;
+  }
+  .trunk { width: 2px; height: 26px; background: var(--paper-line); margin: 0 auto; }
+
+  .branches-row {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 6px; position: relative; padding-top: 2px; row-gap: 26px;
+  }
+  .branch { position: relative; flex: 0 1 150px; display: flex; justify-content: center; }
+  .branch-btn {
+    font-family: var(--font-body); font-weight: 600; font-size: 12.5px;
+    text-align: center; padding: 12px 10px; border-radius: 12px; border: 1px solid var(--paper-line);
+    border-top: 3px solid var(--accent, var(--base));
+    background: var(--card-bg); cursor: pointer; width: 100%;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s cubic-bezier(.34,1.56,.64,1), box-shadow 0.2s ease;
+  }
+  .branch-btn:hover { border-color: var(--accent, var(--base)); transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 16px -8px var(--accent, var(--base)); }
+  .branch-btn.active { background: var(--base-soft); border-color: var(--base); color: #2B5A80; }
+  .branch:nth-of-type(7n+1) .branch-btn { --accent: #6FA8DC; }
+  .branch:nth-of-type(7n+2) .branch-btn { --accent: #E49A98; }
+  .branch:nth-of-type(7n+3) .branch-btn { --accent: #E1B25C; }
+  .branch:nth-of-type(7n+4) .branch-btn { --accent: #7FB88A; }
+  .branch:nth-of-type(7n+5) .branch-btn { --accent: #A78BD8; }
+  .branch:nth-of-type(7n+6) .branch-btn { --accent: #6FA8DC; }
+  .branch:nth-of-type(7n+7) .branch-btn { --accent: #E49A98; }
+
+  @media (max-width: 620px) {
+    .branch { flex: 0 1 44%; }
+  }
+
+  .detail-card {
+    background: var(--card-bg); border: 1px solid var(--paper-line); border-radius: var(--radius);
+    padding: 22px 24px; margin-top: 28px; display: none;
+  }
+  .detail-card.show { display: block; }
+  .detail-label { font-family: var(--font-mono); font-size: 11.5px; color: var(--base); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .detail-title { font-family: var(--font-display); font-weight: 600; font-size: 19px; margin: 0 0 10px; }
+  .detail-desc { font-size: 14.5px; color: var(--ink-soft); margin: 0 0 14px; }
+  .detail-example {
+    font-family: var(--font-mono); font-size: 14px; background: var(--paper); border: 1px solid var(--paper-line);
+    border-radius: 10px; padding: 12px 16px; line-height: 1.7; white-space: pre-line;
+  }
+
+  .sub-section { margin-top: 18px; }
+  .sub-section:first-child { margin-top: 0; }
+  .sub-heading {
+    font-family: var(--font-body); font-weight: 600; font-size: 14.5px; margin: 0 0 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sub-heading .num {
+    font-family: var(--font-mono); font-size: 11px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--base-soft); color: #2B5A80; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .sub-desc { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 8px 28px; }
+  .sub-example {
+    font-family: var(--font-mono); font-size: 13.5px; background: var(--paper); border: 1px solid var(--paper-line);
+    border-radius: 8px; padding: 8px 12px; margin: 0 0 0 28px;
+  }
+  .sub-items { margin: 8px 0 0 28px; display: grid; gap: 8px; }
+  .sub-item {
+    display: flex; gap: 8px; align-items: baseline; font-size: 13.5px;
+  }
+  .sub-item .letter { font-family: var(--font-mono); color: var(--base); flex-shrink: 0; }
+  .sub-item .item-label { font-weight: 600; flex-shrink: 0; }
+  .sub-item .item-formula { font-family: var(--font-mono); color: var(--ink-soft); font-size: 12.5px; }
+
+  .empty-hint { text-align: center; color: var(--ink-soft); font-size: 13.5px; margin-top: 28px; }
+
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: 22px; margin: 0 0 14px; }
+
+  .quiz-card { background: var(--card-bg); border: 1px solid var(--paper-line); border-radius: var(--radius); padding: 22px 22px 18px; margin-bottom: 16px; }
+  .quiz-progress { display: flex; gap: 6px; margin-bottom: 18px; }
+  .quiz-progress span { height: 4px; flex: 1; border-radius: 2px; background: var(--paper-line); }
+  .quiz-progress span.done { background: var(--base); }
+  .quiz-q { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+  .quiz-formula { font-family: var(--font-mono); color: var(--base); font-size: 14.5px; margin-bottom: 14px; line-height: 1.6; }
+  .options { display: grid; gap: 8px; }
+  .opt-btn {
+    text-align: left; font-family: var(--font-body); font-size: 14.5px; padding: 11px 14px;
+    border-radius: 10px; border: 1px solid var(--paper-line); background: var(--paper); cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .opt-btn:hover:not(:disabled) { border-color: var(--base); }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct { background: var(--base-soft); border-color: var(--base); }
+  .opt-btn.wrong { background: #FBEAEA; border-color: var(--acid); }
+  .feedback { margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 14px; display: none; }
+  .feedback.show { display: block; }
+  .feedback.ok { background: var(--base-soft); color: #2B5A80; }
+  .feedback.miss { background: var(--amber-soft); color: #7A5A15; }
+  .next-btn {
+    all: unset; margin-top: 14px; font-family: var(--font-mono); font-size: 12.5px;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--base); cursor: pointer; display: none;
+  }
+  .next-btn.show { display: inline-block; }
+
+  footer { margin-top: 40px; font-size: 13px; color: var(--ink-soft); }
+  footer a { font-family: var(--font-mono); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="bubble-layer" id="bubbleLayer">
+  <div class="bubble" style="left:6%; font-size:16px; animation-duration:14s; animation-delay:0s;">🧪</div>
+  <div class="bubble" style="left:14%; font-size:11px; animation-duration:10s; animation-delay:2s;">⚗️</div>
+  <div class="bubble" style="left:22%; font-size:20px; animation-duration:18s; animation-delay:1s;">🧪</div>
+  <div class="bubble" style="left:31%; font-size:13px; animation-duration:12s; animation-delay:4s;">⚗️</div>
+  <div class="bubble" style="left:40%; font-size:18px; animation-duration:15s; animation-delay:0.5s;">🧪</div>
+  <div class="bubble" style="left:49%; font-size:10px; animation-duration:9s; animation-delay:3s;">⚗️</div>
+  <div class="bubble" style="left:58%; font-size:19px; animation-duration:16s; animation-delay:2.5s;">🧪</div>
+  <div class="bubble" style="left:66%; font-size:13px; animation-duration:11s; animation-delay:5s;">⚗️</div>
+  <div class="bubble" style="left:74%; font-size:22px; animation-duration:19s; animation-delay:1.5s;">🧪</div>
+  <div class="bubble" style="left:82%; font-size:11px; animation-duration:10s; animation-delay:3.5s;">⚗️</div>
+  <div class="bubble" style="left:90%; font-size:17px; animation-duration:13s; animation-delay:0.8s;">🧪</div>
+  <div class="bubble" style="left:96%; font-size:10px; animation-duration:11s; animation-delay:4.5s;">⚗️</div>
+</div>
+<button class="theme-toggle" id="themeToggle" aria-label="Εναλλαγή σκούρου/ανοιχτού θέματος">🌙</button>
+<div class="wrap">
+
+  <span class="eyebrow"><span class="dot"></span>Οργανική Χημεία · Mind Map</span>
+  <h1>Οι 5 τύποι αντιδράσεων, με μια ματιά</h1>
+  <p class="sub">Πάτα σε έναν κλάδο για να δεις τι είναι, σε ποιες ενώσεις συμβαίνει, και ένα παράδειγμα. Μετά, δοκίμασε το quiz αναγνώρισης στο τέλος.</p>
+
+  <div class="central-node">Οργανική Χημεία</div>
+  <div class="trunk"></div>
+  <div class="branches-row" id="branchesRow"></div>
+
+  <div class="detail-card" id="detailCard">
+    <div class="detail-label" id="detailLabel">Τύπος</div>
+    <h3 class="detail-title" id="detailTitle">—</h3>
+    <p class="detail-desc" id="detailDesc">—</p>
+    <div id="detailBody">—</div>
+  </div>
+  <p class="empty-hint" id="emptyHint">↑ Πάτα σε έναν κλάδο για να ξεκινήσεις</p>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Γρήγορος έλεγχος</span>
+    <h2>7 ερωτήσεις — ποιος τύπος είναι;</h2>
+
+    <div class="quiz-progress" id="quizProgress">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div id="quizContainer"></div>
+
+    <p id="quizDone" style="display:none; color:var(--base); font-weight:600;">
+      Ολοκλήρωσες τον έλεγχο. Πήγαινε στο mind map παραπάνω όποτε θες να ξαναδείς κάποιον τύπο.
+    </p>
+  </section>
+
+  <footer>
+    <a href="index.html">← Όλα τα κεφάλαια</a>
+    <div style="margin-top:10px;">Φτιαγμένο με 💙 από μια φοιτήτρια</div>
+  </footer>
+
+</div>
+
+<script>
+  const branches = [
+    {
+      key: "prosthesi", label: "Αντιδράσεις προσθήκης", title: "Αντιδράσεις προσθήκης",
+      desc: "Το μόριο 'ανοίγει' έναν πολλαπλό δεσμό και προσθέτει κάτι σε κάθε άκρο. Τρεις περιπτώσεις να ξεχωρίζεις:",
+      sections: [
+        {
+          num: "1", heading: "Διπλός δεσμός (αλκένια)",
+          desc: "Ένας π δεσμός ανοίγει, μία πρόσθεση.",
+          example: "R−CH=CH−R′  +  X−Y  →  R−CHX−CHY−R′"
+        },
+        {
+          num: "2", heading: "Τριπλός δεσμός (αλκίνια)",
+          desc: "Δύο π δεσμοί — μπορεί να δεχτεί πρόσθεση δύο διαδοχικές φορές.",
+          example: "R−C≡C−R′  +  2 X−Y  →  R−CX₂−CY₂−R′"
+        },
+        {
+          num: "3", heading: "Καρβονύλιο αλδεϋδών και κετονών",
+          desc: "Ο δεσμός C=O δέχεται πρόσθεση — τι προστίθεται καθορίζει το προϊόν:",
+          subitems: [
+            { letter: "α", label: "Υδρογόνο", formula: "R−CHO + H₂ --(Ni)--> R−CH₂OH" },
+            { letter: "β", label: "HCN", formula: "R−CHO + HCN → R−CH(OH)CN" },
+            { letter: "γ", label: "Grignard (R′MgX)", formula: "R−CHO + R′MgX --(H₃O⁺)--> R−CH(OH)−R′" }
+          ]
+        }
+      ]
+    },
+    {
+      key: "apospasi", label: "Αντιδράσεις απόσπασης", title: "Αντιδράσεις απόσπασης",
+      desc: "Το αντίστροφο της πρόσθεσης: αφαιρείς δύο άτομα/ομάδες από γειτονικούς άνθρακες και σχηματίζεται διπλός δεσμός.",
+      example: "R−CH(OH)−CH₂−R′  --(H₂SO₄, θέρμανση)-->  R−CH=CH−R′  +  H₂O"
+    },
+    {
+      key: "ypokatastasi", label: "Υποκατάστασης", title: "Υποκατάστασης",
+      desc: "Συμβαίνει κυρίως σε αλκάνια. Ένα άτομο Η αντικαθίσταται από άλλο άτομο/ομάδα — δεν υπάρχει διπλός δεσμός να 'ανοίξει'.",
+      example: "R−H  +  X₂  --(φως)-->  R−X  +  H−X"
+    },
+    {
+      key: "polymerismos", label: "Πολυμερισμός", title: "Πολυμερισμός",
+      desc: "Πολλά μικρά μόρια (μονομερή) ενώνονται σε μία μεγάλη αλυσίδα (πολυμερές). Στον πολυμερισμό προσθήκης, το μονομερές έχει διπλό δεσμό που 'ανοίγει' — δεν παράγεται κανένα μικρό παραπροϊόν.",
+      example: "n CH₂=CH−R  →  −[CH₂−CHR]ₙ−"
+    },
+    {
+      key: "oxeidoanagogi", label: "Οξείδωσης-αναγωγής", title: "Οξείδωσης-Αναγωγής",
+      desc: "Οι αλκοόλες οξειδώνονται σταδιακά: πρωτοταγής αλκοόλη → αλδεΰδη → καρβοξυλικό οξύ. Η αναγωγή είναι η αντίστροφη πορεία, με H₂/Ni.",
+      example: "Οξείδωση: R−CH₂OH --(οξείδωση)--> R−CHO --(οξείδωση)--> R−COOH\nΑναγωγή: R−CHO --(H₂/Ni)--> R−CH₂OH"
+    },
+    {
+      key: "oxea-vaseis", label: "Οξέα-βάσεις", title: "Οξέα-Βάσεις",
+      desc: "Τα καρβοξυλικά οξέα είναι ασθενή οξέα — αντιδρούν με βάσεις (NaOH) αλλά και με NaHCO₃, ελευθερώνοντας CO₂. Οι αμίνες συμπεριφέρονται σαν ασθενείς βάσεις.",
+      example: "R−COOH  +  NaHCO₃  →  R−COONa  +  H₂O  +  CO₂↑"
+    },
+    {
+      key: "diakriseis", label: "Διακρίσεις-ταυτοποιήσεις", title: "Διακρίσεις-Ταυτοποιήσεις",
+      desc: "Δύο διαφορετικές έννοιες που συγχέονται εύκολα:",
+      sections: [
+        {
+          num: "1", heading: "Διάκριση",
+          desc: "Έχεις δύο υποψήφιες ενώσεις (είτε η Α είτε η Β) και ψάχνεις ένα τεστ που δίνει διαφορετικό, παρατηρήσιμο αποτέλεσμα στην καθεμία (αέριο, χρώμα, ίζημα) — έτσι καταλαβαίνεις ποια είναι ποια.",
+          example: "Na  +  R−OH  →  H₂↑ (αντιδρά)\nNa  +  αιθέρας  →  καμία αντίδραση"
+        },
+        {
+          num: "2", heading: "Ταυτοποίηση",
+          desc: "Έχεις ΜΙΑ άγνωστη ένωση με γνωστό μοριακό τύπο και κάποιες ιδιότητές της — ψάχνεις να καθορίσεις ακριβώς ποια ένωση είναι, χωρίς να τη συγκρίνεις με άλλη.",
+          example: "Ένωση C₃H₈O δίνει κίτρινο ίζημα με I₂/NaOH\n→ δίνει αλογονοφορμική αντίδραση → είναι η 2-προπανόλη"
+        }
+      ]
+    }
+  ];
+
+  const branchesRow = document.getElementById('branchesRow');
+  const detailCard = document.getElementById('detailCard');
+  const detailLabel = document.getElementById('detailLabel');
+  const detailTitle = document.getElementById('detailTitle');
+  const detailDesc = document.getElementById('detailDesc');
+  const detailBody = document.getElementById('detailBody');
+  const emptyHint = document.getElementById('emptyHint');
+
+  function renderSections(sections) {
+    return sections.map(s => {
+      const sub = s.subitems
+        ? `<div class="sub-items">${s.subitems.map(si =>
+            `<div class="sub-item"><span class="letter">${si.letter})</span><span class="item-label">${si.label}:</span><span class="item-formula">${si.formula}</span></div>`
+          ).join('')}</div>`
+        : `<div class="sub-example">${s.example}</div>`;
+      return `
+        <div class="sub-section">
+          <div class="sub-heading"><span class="num">${s.num}</span>${s.heading}</div>
+          <p class="sub-desc">${s.desc}</p>
+          ${sub}
+        </div>
+      `;
+    }).join('');
+  }
+
+  branchesRow.innerHTML = branches.map(b =>
+    `<div class="branch"><button class="branch-btn" data-key="${b.key}">${b.label}</button></div>`
+  ).join('');
+
+  branchesRow.querySelectorAll('.branch-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      branchesRow.querySelectorAll('.branch-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const b = branches.find(x => x.key === btn.dataset.key);
+      detailLabel.textContent = 'Τύπος αντίδρασης';
+      detailTitle.textContent = b.title;
+      detailDesc.textContent = b.desc;
+      detailBody.innerHTML = b.sections
+        ? renderSections(b.sections)
+        : `<div class="detail-example">${b.example}</div>`;
+      detailCard.classList.add('show');
+      emptyHint.style.display = 'none';
+    });
+  });
+
+  const questions = [
+    {
+      prompt: "Τι τύπος αντίδρασης είναι αυτή;",
+      formula: "CH₂=CH₂  +  Br₂  →  CH₂BrCH₂Br",
+      options: ["Πρόσθεση", "Υποκατάσταση", "Απόσπαση", "Εστεροποίηση"],
+      correct: 0,
+      insight: "Υπάρχει διπλός δεσμός που 'ανοίγει' και δέχεται δύο νέα άτομα — χαρακτηριστικό της πρόσθεσης."
+    },
+    {
+      prompt: "Τι τύπος αντίδρασης είναι αυτή;",
+      formula: "CH₄  +  Cl₂  --(φως)-->  CH₃Cl  +  HCl",
+      options: ["Πρόσθεση", "Υποκατάσταση", "Οξείδωση", "Απόσπαση"],
+      correct: 1,
+      insight: "Δεν υπάρχει διπλός δεσμός στο αλκάνιο — ένα Η απλά αντικαθίσταται από Cl."
+    },
+    {
+      prompt: "Τι τύπος αντίδρασης είναι αυτή;",
+      formula: "CH₃CH₂OH  --(H₂SO₄, θέρμανση)-->  CH₂=CH₂  +  H₂O",
+      options: ["Πρόσθεση", "Εστεροποίηση", "Απόσπαση", "Υποκατάσταση"],
+      correct: 2,
+      insight: "Αφαιρείται νερό και σχηματίζεται διπλός δεσμός — κλασική απόσπαση (αφυδάτωση)."
+    },
+    {
+      prompt: "Τι τύπος αντίδρασης είναι αυτή;",
+      formula: "CH₃CH₂OH  --(ήπια οξείδωση)-->  CH₃CHO",
+      options: ["Απόσπαση", "Οξείδωση", "Πρόσθεση", "Υποκατάσταση"],
+      correct: 1,
+      insight: "Η αλκοόλη μετατρέπεται σε αλδεΰδη — αυτό είναι οξείδωση, ένα ενδιάμεσο στάδιο πριν το οξύ."
+    },
+    {
+      prompt: "Τι τύπος αντίδρασης είναι αυτή;",
+      formula: "CH₃COOH  +  CH₃OH  --(H⁺)-->  CH₃COOCH₃  +  H₂O",
+      options: ["Οξείδωση", "Απόσπαση", "Υποκατάσταση", "Εστεροποίηση"],
+      correct: 3,
+      insight: "Οξύ + αλκοόλη → εστέρας + νερό, με όξινο καταλύτη — ο ορισμός της εστεροποίησης."
+    },
+    {
+      prompt: "Τι τύπος αντίδρασης είναι αυτή;",
+      formula: "n CH₂=CH₂  →  −[CH₂−CH₂]ₙ−",
+      options: ["Πολυμερισμός", "Πρόσθεση απλή", "Απόσπαση", "Οξείδωση"],
+      correct: 0,
+      insight: "Πολλά μόρια αιθενίου ενώνονται σε μία μεγάλη αλυσίδα χωρίς παραπροϊόν — αυτό είναι πολυμερισμός προσθήκης."
+    },
+    {
+      prompt: "Τι τύπος αντίδρασης είναι αυτή;",
+      formula: "CH₃COOH  +  NaHCO₃  →  CH₃COONa  +  H₂O  +  CO₂↑",
+      options: ["Οξείδωση", "Οξέα-βάσεις", "Υποκατάσταση", "Πολυμερισμός"],
+      correct: 1,
+      insight: "Το καρβοξυλικό οξύ αντιδρά ως ασθενές οξύ με το NaHCO₃, ελευθερώνοντας CO₂ — κλασικό τεστ ταυτοποίησης οξέος."
+    }
+  ];
+
+  let current = 0;
+  const container = document.getElementById('quizContainer');
+  const progressEl = document.getElementById('quizProgress');
+
+  function renderQuestion(i) {
+    const q = questions[i];
+    container.innerHTML = `
+      <div class="quiz-card">
+        <div class="quiz-q">Ερώτηση ${i + 1}</div>
+        <div class="quiz-formula">${q.formula}</div>
+        <div class="options">
+          ${q.options.map((opt, idx) => `<button class="opt-btn" data-idx="${idx}">${opt}</button>`).join('')}
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <button class="next-btn" id="nextBtn">Επόμενη ερώτηση →</button>
+      </div>
+    `;
+    container.querySelectorAll('.opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleAnswer(btn, q));
+    });
+  }
+
+  function handleAnswer(btn, q) {
+    const chosen = parseInt(btn.dataset.idx);
+    const buttons = container.querySelectorAll('.opt-btn');
+    buttons.forEach(b => b.disabled = true);
+    buttons[q.correct].classList.add('correct');
+    if (chosen !== q.correct) btn.classList.add('wrong');
+
+    const feedback = document.getElementById('feedback');
+    if (chosen === q.correct) {
+      feedback.className = 'feedback show ok';
+      feedback.textContent = 'Σωστά. ' + q.insight;
+    } else {
+      feedback.className = 'feedback show miss';
+      feedback.textContent = 'Όχι ακριβώς — ' + q.insight;
+    }
+
+    progressEl.children[current].classList.add('done');
+
+    if (current < questions.length - 1) {
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.classList.add('show');
+      nextBtn.addEventListener('click', () => { current++; renderQuestion(current); });
+    } else {
+      document.getElementById('quizDone').style.display = 'block';
+    }
+  }
+
+  renderQuestion(current);
+</script>
+
+<script>
+  let lastSpawn = 0;
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastSpawn < 70) return;
+      lastSpawn = now;
+      const size = 12 + Math.random() * 8;
+      const b = document.createElement('div');
+      b.className = 'mouse-bubble';
+      b.style.fontSize = size + 'px';
+      b.style.left = e.clientX + 'px';
+      b.style.top = e.clientY + 'px';
+      b.textContent = Math.random() < 0.5 ? '🧪' : '⚗️';
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 1100);
+    });
+  }
+
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ηλεκτρονική Δομή & Περιοδικός Πίνακας — Flashcards</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  /* Ίδια tokens με την κάψουλα, ώστε όλο το site να μοιάζει ενιαίο */
+  :root {
+    --paper:      #E1EDF8;
+    --paper-line: #D6E6F2;
+    --card-bg:    #FFFFFF;
+    --ink:        #223142;
+    --ink-soft:   #64798D;
+    --acid:       #E49A98;
+    --base:       #6FA8DC;
+    --base-soft:  #DCEEFB;
+    --amber:      #F0CB86;
+    --amber-soft: #FBF3E0;
+    --radius:     16px;
+    --font-display: "Fraunces", serif;
+    --font-body:    "IBM Plex Sans", sans-serif;
+    --font-mono:    "IBM Plex Mono", monospace;
+  }
+  body.dark {
+    --paper:      #0E1826;
+    --paper-line: #2A3A54;
+    --card-bg:    #16223A;
+    --ink:        #EAF2FA;
+    --ink-soft:   #8DA0B8;
+    --amber-soft: #3A2E18;
+  }
+
+  * { box-sizing: border-box; }
+
+  .theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 50;
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--card-bg); border: 1px solid var(--paper-line);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(34,49,66,0.1);
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .bubble-layer {
+    position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+  }
+  .bubble {
+    position: absolute; bottom: -60px;
+    animation: rise linear infinite;
+    filter: drop-shadow(0 2px 3px rgba(111,168,220,0.25));
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 0; }
+    8%   { opacity: 0.5; }
+    50%  { transform: translateY(-54vh) rotate(8deg) scale(1.05); }
+    92%  { opacity: 0.3; }
+    100% { transform: translateY(-108vh) rotate(-6deg) scale(1.15); opacity: 0; }
+  }
+  .mouse-bubble {
+    position: fixed; pointer-events: none; z-index: 1;
+    animation: float-up 1.1s ease-out forwards;
+  }
+  @keyframes float-up {
+    0%   { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    100% { transform: translate(-50%, -130px) scale(0.5) rotate(15deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bubble, .mouse-bubble { animation: none !important; display: none; }
+  }
+
+  :focus-visible { outline: 2px solid var(--base); outline-offset: 3px; }
+
+  .deck-wrap, .deck-picker {
+    position: relative; z-index: 2;
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .picker-row { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+  .picker-btn {
+    flex: 1; min-width: 150px;
+    background: #fff; border: 1px solid var(--paper-line); border-radius: var(--radius);
+    padding: 22px 16px; text-align: center; cursor: pointer;
+    font-family: var(--font-body); color: var(--ink);
+    transition: border-color 0.15s ease, transform 0.15s ease, background 0.15s ease;
+  }
+  .picker-btn:hover:not(:disabled) { border-color: var(--base); background: var(--base-soft); transform: translateY(-3px); }
+  .picker-btn:disabled { opacity: 0.5; cursor: default; }
+  .picker-icon { font-size: 26px; display: block; margin-bottom: 8px; }
+  .picker-title { font-weight: 600; font-size: 15px; display: block; }
+  .picker-sub { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); display: block; margin-top: 4px; }
+
+  .back-link {
+    all: unset; cursor: pointer; font-family: var(--font-mono); font-size: 12px;
+    color: var(--ink-soft); margin-bottom: 14px; display: inline-block;
+  }
+  .back-link:hover { color: var(--base); }
+
+  .eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--base); }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 26px;
+    margin: 0 0 6px;
+    line-height: 1.15;
+  }
+  .hint {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    margin: 0 0 22px;
+  }
+
+  /* ---------- Πρόοδος ---------- */
+  .progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .progress-track {
+    height: 4px;
+    background: var(--paper-line);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 26px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--acid), var(--amber) 45%, var(--base) 100%);
+    transition: width 0.25s ease;
+  }
+
+  /* ---------- Η κάρτα ----------
+     Σταθερό ύψος + overflow hidden: αν το κείμενο δεν χωράει,
+     ΔΕΝ φαίνεται — αυτό είναι σκόπιμο, για να μη ξαναμπεί
+     "θεωρία" μέσα σε flashcard κατά λάθος. */
+  .card-stage {
+    perspective: 1400px;
+    height: 320px;
+    margin-bottom: 22px;
+  }
+  .card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(.4,.2,.2,1);
+  }
+  .card.flipped { transform: rotateY(180deg); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--radius);
+    border: 1px solid var(--paper-line);
+    padding: 26px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .face.front {
+    background: var(--card-bg);
+    justify-content: center;
+  }
+  .face.back {
+    background: var(--ink);
+    color: var(--paper);
+    transform: rotateY(180deg);
+    justify-content: center;
+  }
+
+  .face-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .face.front .face-label { color: var(--base); }
+  .face.back .face-label { color: var(--amber); }
+
+  .face-text {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 1.35;
+  }
+  .face.back .face-text {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 16.5px;
+  }
+  .face-text code, .face-text .math {
+    font-family: var(--font-mono);
+    font-size: 0.95em;
+  }
+  .face.front .face-text code { background: var(--base-soft); padding: 1px 6px; border-radius: 5px; }
+  .face.back .face-text .math { color: var(--amber); }
+
+  .flip-hint {
+    margin-top: 16px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .face.back .flip-hint { color: #9FB0A8; }
+
+  /* ---------- Χειριστήρια ---------- */
+  .controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .nav-btn {
+    all: unset;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--paper-line);
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .nav-btn:hover { border-color: var(--base); }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; }
+  .nav-btn:disabled:hover { border-color: var(--paper-line); }
+
+  .flip-btn {
+    all: unset;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--base);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card, .progress-fill { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bubble-layer" id="bubbleLayer">
+  <div class="bubble" style="left:6%; font-size:16px; animation-duration:14s; animation-delay:0s;">🧪</div>
+  <div class="bubble" style="left:14%; font-size:11px; animation-duration:10s; animation-delay:2s;">⚗️</div>
+  <div class="bubble" style="left:22%; font-size:20px; animation-duration:18s; animation-delay:1s;">🧪</div>
+  <div class="bubble" style="left:31%; font-size:13px; animation-duration:12s; animation-delay:4s;">⚗️</div>
+  <div class="bubble" style="left:40%; font-size:18px; animation-duration:15s; animation-delay:0.5s;">🧪</div>
+  <div class="bubble" style="left:49%; font-size:10px; animation-duration:9s; animation-delay:3s;">⚗️</div>
+  <div class="bubble" style="left:58%; font-size:19px; animation-duration:16s; animation-delay:2.5s;">🧪</div>
+  <div class="bubble" style="left:66%; font-size:13px; animation-duration:11s; animation-delay:5s;">⚗️</div>
+  <div class="bubble" style="left:74%; font-size:22px; animation-duration:19s; animation-delay:1.5s;">🧪</div>
+  <div class="bubble" style="left:82%; font-size:11px; animation-duration:10s; animation-delay:3.5s;">⚗️</div>
+  <div class="bubble" style="left:90%; font-size:17px; animation-duration:13s; animation-delay:0.8s;">🧪</div>
+  <div class="bubble" style="left:96%; font-size:10px; animation-duration:11s; animation-delay:4.5s;">⚗️</div>
+</div>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Εναλλαγή σκούρου/ανοιχτού θέματος">🌙</button>
+
+<div class="deck-picker" id="deckPicker">
+  <span class="eyebrow"><span class="dot"></span>Κεφάλαιο 6 · Ηλεκτρονική Δομή & Περιοδικός Πίνακας</span>
+  <h1>Διάλεξε τράπουλα</h1>
+  <p class="hint">Δύο ξεχωριστά σετ καρτών — διάλεξε τι θες να εξασκήσεις.</p>
+  <div class="picker-row">
+    <button class="picker-btn" data-deck="exercises">
+      <span class="picker-icon">📝</span>
+      <span class="picker-title">Ασκήσεις</span>
+      <span class="picker-sub">10 κάρτες</span>
+    </button>
+    <button class="picker-btn" id="theoryBtn" data-deck="theory">
+      <span class="picker-icon">📘</span>
+      <span class="picker-title">Θεωρία</span>
+      <span class="picker-sub">9 κάρτες</span>
+    </button>
+  </div>
+  <p style="margin:26px 0 0; font-size:13px; color:var(--ink-soft); text-align:center;">Φτιαγμένο με 💙 από μια φοιτήτρια</p>
+</div>
+
+<div class="deck-wrap" id="deckWrap" style="display:none;">
+  <button class="back-link" id="backToPicker">← Πίσω στις τράπουλες</button>
+  <h1 id="deckTitle">10 κάρτες, ό,τι χρειάζεσαι για άσκηση</h1>
+  <p class="hint">Κλικ ή Enter στην κάρτα για να τη γυρίσεις.</p>
+
+  <div class="progress-row">
+    <span id="counter">Κάρτα 1/10</span>
+    <span id="knownCount">0 έτοιμες</span>
+  </div>
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:10%"></div></div>
+
+  <div class="card-stage">
+    <div class="card" id="card" tabindex="0" role="button" aria-label="Γύρισε την κάρτα">
+      <div class="face front">
+        <div class="face-label">Ερώτηση</div>
+        <div class="face-text" id="frontText"></div>
+        <div class="flip-hint">κλικ για απάντηση →</div>
+      </div>
+      <div class="face back">
+        <div class="face-label">Απάντηση</div>
+        <div class="face-text" id="backText"></div>
+        <div class="flip-hint">← κλικ για ερώτηση</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="nav-btn" id="prevBtn">← Πίσω</button>
+    <button class="flip-btn" id="flipBtn">Γύρισε</button>
+    <button class="nav-btn" id="nextBtn">Επόμενη →</button>
+  </div>
+  <p style="margin:26px 0 0; font-size:13px; color:var(--ink-soft); text-align:center;">Φτιαγμένο με 💙 από μια φοιτήτρια</p>
+</div>
+
+<script>
+  /* ----------------------------------------------------------------
+     ΠΕΡΙΕΧΟΜΕΝΟ ΚΑΡΤΩΝ
+     Κανόνας: front + back πρέπει να χωράνε σε ~2 γραμμές το καθένα.
+     Αν δεν χωράει, είναι δύο κάρτες, όχι μία — μην το τεντώνεις.
+     ---------------------------------------------------------------- */
+  const cardsExercises = [
+    {
+      front: "Ποιος είναι ο τύπος για τον μέγιστο αριθμό e⁻ σε μια στιβάδα;",
+      back: '<span class="math">2n²</span> (n = αριθμός στιβάδας)<br>π.χ. στιβάδα Μ (n=3): 2×9 = 18'
+    },
+    {
+      front: "Με ποια σειρά γεμίζουν οι στιβάδες K, L, M, N;",
+      back: "Κ (n=1) → L (n=2) → M (n=3) → N (n=4)<br>Πάντα από μέσα προς τα έξω."
+    },
+    {
+      front: "Πόσα e⁻ χωράει το πολύ η εξωτερική στιβάδα;",
+      back: "8 (κανόνας οκτάδας)<br>εκτός από την Κ, που χωράει έως 2."
+    },
+    {
+      front: "Πώς γράφεται ο ηλεκτρονιακός τύπος του Na (Z=11);",
+      back: '<code style="background:none;color:var(--amber)">K² L⁸ M¹</code><br>Έλεγχος: 2+8+1 = 11 ✓'
+    },
+    {
+      front: "Πώς βρίσκεις την ΠΕΡΙΟΔΟ ενός στοιχείου;",
+      back: "Περίοδος = πλήθος στιβάδων.<br>Na έχει K,L,M (3 στιβάδες) → 3η περίοδος."
+    },
+    {
+      front: "Πώς βρίσκεις την ΟΜΑΔΑ ενός στοιχείου;",
+      back: "Ομάδα = e⁻ της εξωτερικής στιβάδας.<br>Na έχει 1 e⁻ στην M → 1η ομάδα."
+    },
+    {
+      front: "Ποιες ομάδες πρέπει να αναγνωρίζεις με το όνομά τους;",
+      back: "1η: Αλκάλια · 2η: Αλκαλικές γαίες<br>17η: Αλογόνα · 18η: Ευγενή αέρια"
+    },
+    {
+      front: "Πώς αλλάζει η ατομική ακτίνα σε μια ΠΕΡΙΟΔΟ, αριστερά→δεξιά;",
+      back: "Μειώνεται.<br>Αυξάνεται ο ατομικός αριθμός, οπότε αυξάνεται και το δραστικό πυρηνικό φορτίο — τα εξωτερικά e⁻ έλκονται περισσότερο από τον πυρήνα, και η ατομική ακτίνα (το μέγεθος) μειώνεται."
+    },
+    {
+      front: "Πώς αλλάζει η ατομική ακτίνα σε μια ΟΜΑΔΑ, πάνω→κάτω;",
+      back: "Αυξάνεται.<br>Προστίθεται νέα στιβάδα σε κάθε επόμενο στοιχείο."
+    },
+    {
+      front: "Ποια στοιχεία έχουν τη μεγαλύτερη ενέργεια ιοντισμού;",
+      back: "Τα ευγενή αέρια (18η ομάδα).<br>Πολύ σταθερή δομή — δύσκολο να αφαιρεθεί e⁻."
+    }
+  ];
+
+  const cardsTheory = [
+    {
+      front: "Ποια είναι η 1η συνθήκη του Bohr;",
+      back: "Τα ηλεκτρόνια περιστρέφονται γύρω από τον πυρήνα σε ορισμένες κυκλικές τροχιές. Κάθε επιτρεπόμενη τροχιά έχει καθορισμένη ενέργεια, είναι δηλαδή κβαντισμένη."
+    },
+    {
+      front: "Ποια είναι η 2η συνθήκη του Bohr;",
+      back: "Το ηλεκτρόνιο εκπέμπει ενέργεια υπό μορφή ακτινοβολίας μόνο όταν μεταπηδά από μια τροχιά σε μια άλλη, όταν δηλαδή αλλάζει ενεργειακή στάθμη."
+    },
+    {
+      front: "Τι αναφέρει η κβαντική θεωρία;",
+      back: "Η ακτινοβολία εκπέμπεται όχι με συνεχή τρόπο αλλά σε μικρά πακέτα (κβάντα). Τα κβάντα φωτός ή ηλεκτρομαγνητικής ακτινοβολίας γενικότερα ονομάζονται φωτόνια."
+    },
+    {
+      front: "Τι αναφέρει η κυματική θεωρία της ύλης του De Broglie;",
+      back: "Το φως (κβάντο: φωτόνιο), όπως και κάθε κινούμενο μικρό σωματίδιο (π.χ. e⁻), παρουσιάζει διττή φύση: σωματιδίου (κβάντα) και κύματος (ηλεκτρομαγνητικό κύμα)."
+    },
+    {
+      front: "Το μήκος κύματος λ ενός σωματιδίου μάζας m και ταχύτητας u δίνεται από τη σχέση:",
+      back: '<span class="math">λ = h / (m·u)</span>'
+    },
+    {
+      front: "Τι αναφέρει η αρχή της αβεβαιότητας του Heisenberg (1927);",
+      back: "Είναι αδύνατο να προσδιορίσουμε με ακρίβεια συγχρόνως τη θέση και την ορμή <span class=\"math\">(p = m·u)</span> ενός μικρού σωματιδίου, π.χ. e⁻."
+    },
+    {
+      front: "Τι ονομάζουμε ατομικό τροχιακό;",
+      back: "Η επίλυση της εξίσωσης Schrödinger οδηγεί στις κυματοσυναρτήσεις ψ, που περιγράφουν την κατάσταση του e⁻ με ορισμένη ενέργεια <span class=\"math\">(Eₙ)</span>."
+    },
+    {
+      front: "Τι δηλώνει το ψ;",
+      back: "Το ψ από μόνο του δεν έχει φυσική σημασία — είναι όμως ένδειξη παρουσίας/απουσίας του e⁻ γύρω από τον πυρήνα: <span class=\"math\">ψ=0</span> → απουσία, <span class=\"math\">ψ≠0</span> → παρουσία."
+    },
+    {
+      front: "Τι εκφράζει το ψ²;",
+      back: "Την πιθανότητα να βρεθεί το ηλεκτρόνιο σε ένα ορισμένο σημείο του χώρου γύρω από τον πυρήνα."
+    }
+  ];
+
+  const decks = { exercises: cardsExercises, theory: cardsTheory };
+  const deckTitles = { exercises: "10 κάρτες, ό,τι χρειάζεσαι για άσκηση", theory: "9 κάρτες θεωρίας: Bohr & κβαντική" };
+  let cards = cardsExercises;
+
+  let i = 0;
+  let flipped = false;
+  let knownCount = 0;
+
+  const cardEl = document.getElementById('card');
+  const frontText = document.getElementById('frontText');
+  const backText = document.getElementById('backText');
+  const counter = document.getElementById('counter');
+  const progressFill = document.getElementById('progressFill');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const flipBtn = document.getElementById('flipBtn');
+  const knownCountEl = document.getElementById('knownCount');
+  const seen = new Set();
+
+  function render() {
+    frontText.innerHTML = cards[i].front;
+    backText.innerHTML = cards[i].back;
+    cardEl.classList.toggle('flipped', flipped);
+    counter.textContent = `Κάρτα ${i + 1}/${cards.length}`;
+    progressFill.style.width = `${((i + 1) / cards.length) * 100}%`;
+    prevBtn.disabled = i === 0;
+    nextBtn.disabled = i === cards.length - 1;
+    knownCountEl.textContent = `${seen.size} από ${cards.length} τις έχεις δει`;
+  }
+
+  const deckPicker = document.getElementById('deckPicker');
+  const deckWrap = document.getElementById('deckWrap');
+  const deckTitle = document.getElementById('deckTitle');
+
+  document.querySelectorAll('.picker-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.deck;
+      cards = decks[key];
+      if (!cards.length) return;
+      i = 0; flipped = false; seen.clear();
+      deckTitle.textContent = deckTitles[key];
+      deckPicker.style.display = 'none';
+      deckWrap.style.display = 'block';
+      render();
+    });
+  });
+
+  document.getElementById('backToPicker').addEventListener('click', () => {
+    deckWrap.style.display = 'none';
+    deckPicker.style.display = 'block';
+  });
+
+  function flip() {
+    flipped = !flipped;
+    if (flipped) seen.add(i);
+    render();
+  }
+
+  cardEl.addEventListener('click', flip);
+  cardEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
+  });
+  flipBtn.addEventListener('click', flip);
+
+  prevBtn.addEventListener('click', () => { if (i > 0) { i--; flipped = false; render(); } });
+  nextBtn.addEventListener('click', () => { if (i < cards.length - 1) { i++; flipped = false; render(); } });
+</script>
+
+<script>
+  let lastSpawn = 0;
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastSpawn < 70) return;
+      lastSpawn = now;
+      const size = 12 + Math.random() * 8;
+      const b = document.createElement('div');
+      b.className = 'mouse-bubble';
+      b.style.fontSize = size + 'px';
+      b.style.left = e.clientX + 'px';
+      b.style.top = e.clientY + 'px';
+      b.textContent = Math.random() < 0.5 ? '🧪' : '⚗️';
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 1100);
+    });
+  }
+
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  });
+</script>
+
+</body>
+</html>

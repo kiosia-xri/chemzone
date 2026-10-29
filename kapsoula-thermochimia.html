@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Θερμοχημεία — Κάψουλα Χημείας</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper:      #E1EDF8;
+    --paper-line: #D6E6F2;
+    --card-bg:    #FFFFFF;
+    --ink:        #223142;
+    --ink-soft:   #64798D;
+    --acid:       #E49A98;
+    --base:       #6FA8DC;
+    --base-soft:  #DCEEFB;
+    --amber:      #F0CB86;
+    --amber-soft: #FBF3E0;
+    --radius:     14px;
+    --font-display: "Fraunces", serif;
+    --font-body:    "IBM Plex Sans", sans-serif;
+    --font-mono:    "IBM Plex Mono", monospace;
+  }
+  body.dark {
+    --paper:      #0E1826;
+    --paper-line: #2A3A54;
+    --card-bg:    #16223A;
+    --ink:        #EAF2FA;
+    --ink-soft:   #8DA0B8;
+    --amber-soft: #3A2E18;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  .theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 50;
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--card-bg); border: 1px solid var(--paper-line);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(34,49,66,0.1);
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .bubble-layer {
+    position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+  }
+  .bubble {
+    position: absolute; bottom: -60px;
+    animation: rise linear infinite;
+    filter: drop-shadow(0 2px 3px rgba(111,168,220,0.25));
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 0; }
+    8%   { opacity: 0.5; }
+    50%  { transform: translateY(-54vh) rotate(8deg) scale(1.05); }
+    92%  { opacity: 0.3; }
+    100% { transform: translateY(-108vh) rotate(-6deg) scale(1.15); opacity: 0; }
+  }
+  .mouse-bubble {
+    position: fixed; pointer-events: none; z-index: 1;
+    animation: float-up 1.1s ease-out forwards;
+  }
+  @keyframes float-up {
+    0%   { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    100% { transform: translate(-50%, -130px) scale(0.5) rotate(15deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bubble, .mouse-bubble { animation: none !important; display: none; }
+  }
+
+  .wrap { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; padding: 48px 24px 96px; }
+  a { color: var(--base); }
+  :focus-visible { outline: 2px solid var(--base); outline-offset: 3px; }
+
+  .indicator-rule {
+    height: 4px; border-radius: 2px; margin: 56px 0;
+    background: linear-gradient(90deg, var(--acid), var(--amber) 45%, var(--base) 100%);
+    opacity: 0.55;
+  }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--font-mono); font-size: 12.5px;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--base); flex-shrink: 0; }
+
+  .hero { padding-top: 8px; }
+  .hero h1 {
+    font-family: var(--font-display); font-optical-sizing: auto; font-weight: 600;
+    font-size: clamp(30px, 5vw, 44px); line-height: 1.12; margin: 14px 0 12px; letter-spacing: -0.01em;
+  }
+  .hero .sub { color: var(--ink-soft); font-size: 17px; max-width: 52ch; margin: 0 0 20px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .chip {
+    font-family: var(--font-mono); font-size: 12.5px; padding: 6px 12px;
+    border-radius: 999px; background: var(--amber-soft); color: #7A5A15; border: 1px solid #EFDCA8;
+  }
+
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: 24px; margin: 0 0 14px; }
+  p { margin: 0 0 14px; }
+
+  .rules-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 20px 0 8px; }
+  @media (max-width: 560px) { .rules-grid { grid-template-columns: 1fr; } }
+
+  .rule-card {
+    border: 1px solid var(--paper-line); border-left: 3px solid var(--accent, var(--base));
+    background: var(--card-bg); border-radius: var(--radius); padding: 16px 18px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .rule-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px -8px var(--accent, var(--base)); }
+  .rules-grid .rule-card:nth-of-type(5n+1) { --accent: #6FA8DC; }
+  .rules-grid .rule-card:nth-of-type(5n+2) { --accent: #E49A98; }
+  .rules-grid .rule-card:nth-of-type(5n+3) { --accent: #E1B25C; }
+  .rules-grid .rule-card:nth-of-type(5n+4) { --accent: #7FB88A; }
+  .rules-grid .rule-card:nth-of-type(5n+5) { --accent: #A78BD8; }
+  .rule-card .num { font-family: var(--font-mono); font-size: 12px; color: var(--accent, var(--base)); display: block; margin-bottom: 6px; }
+  .rule-card p { margin: 0; font-size: 14.5px; color: var(--ink); }
+  .rule-card code {
+    font-family: var(--font-mono); background: var(--base-soft); padding: 1px 6px; border-radius: 5px; font-size: 13.5px;
+  }
+
+  .note-box {
+    border: 1px solid #E8CC8E; background: var(--amber-soft); border-radius: var(--radius);
+    padding: 14px 18px; font-size: 14px; color: #7A5A15; margin-top: 14px;
+  }
+  .note-box strong { color: #5C4310; }
+  .note-box .math { font-family: var(--font-mono); }
+
+  .example-box { border: 1px solid var(--paper-line); border-radius: var(--radius); background: var(--card-bg); padding: 20px 22px; }
+  .formula {
+    font-family: var(--font-mono); font-size: 16px; background: var(--ink); color: var(--paper);
+    display: inline-block; padding: 8px 14px; border-radius: 8px; margin-bottom: 6px; line-height: 1.5;
+  }
+  .given-list { font-size: 14px; color: var(--ink-soft); margin: 10px 0 18px; }
+  .given-list div { margin-bottom: 4px; font-family: var(--font-mono); }
+
+  .step { border-top: 1px solid var(--paper-line); padding: 14px 0; }
+  .step:first-of-type { border-top: none; margin-top: 14px; }
+  .step-toggle {
+    all: unset; display: flex; align-items: center; gap: 10px; cursor: pointer;
+    font-family: var(--font-body); font-weight: 600; font-size: 15px; width: 100%;
+  }
+  .step-toggle .idx {
+    font-family: var(--font-mono); font-size: 12px; color: #fff; background: var(--base);
+    width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .step-toggle .chevron { margin-left: auto; transition: transform 0.2s ease; color: var(--ink-soft); }
+  .step[data-open="true"] .chevron { transform: rotate(90deg); }
+  .step-body { max-height: 0; overflow: hidden; transition: max-height 0.25s ease; font-size: 14.5px; color: var(--ink-soft); }
+  .step[data-open="true"] .step-body { max-height: 200px; }
+  .step-body-inner { padding: 10px 0 4px 32px; }
+  .step-body-inner .math { font-family: var(--font-mono); color: var(--ink); }
+
+  .quiz-card { border: 1px solid var(--paper-line); border-radius: var(--radius); background: var(--card-bg); padding: 22px 22px 18px; margin-bottom: 16px; }
+  .quiz-progress { display: flex; gap: 6px; margin-bottom: 18px; }
+  .quiz-progress span { height: 4px; flex: 1; border-radius: 2px; background: var(--paper-line); }
+  .quiz-progress span.done { background: var(--base); }
+  .quiz-q { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+  .quiz-formula { font-family: var(--font-mono); color: var(--base); font-size: 15px; margin-bottom: 14px; }
+  .options { display: grid; gap: 8px; }
+  .opt-btn {
+    text-align: left; font-family: var(--font-body); font-size: 14.5px; padding: 11px 14px;
+    border-radius: 10px; border: 1px solid var(--paper-line); background: var(--paper); cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .opt-btn:hover:not(:disabled) { border-color: var(--base); }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct { background: var(--base-soft); border-color: var(--base); }
+  .opt-btn.wrong { background: #FBEAEA; border-color: var(--acid); }
+  .feedback { margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 14px; display: none; }
+  .feedback.show { display: block; }
+  .feedback.ok { background: var(--base-soft); color: #2B5A80; }
+  .feedback.miss { background: var(--amber-soft); color: #7A5A15; }
+  .next-btn {
+    all: unset; margin-top: 14px; font-family: var(--font-mono); font-size: 12.5px;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--base); cursor: pointer; display: none;
+  }
+  .next-btn.show { display: inline-block; }
+
+  footer {
+    margin-top: 8px; display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px; font-size: 13.5px; color: var(--ink-soft);
+  }
+  footer .next-topic {
+    font-family: var(--font-mono); font-size: 12.5px; color: var(--ink); text-decoration: none;
+    border: 1px solid var(--paper-line); padding: 8px 14px; border-radius: 999px;
+  }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<div class="bubble-layer" id="bubbleLayer">
+  <div class="bubble" style="left:6%; font-size:16px; animation-duration:14s; animation-delay:0s;">🧪</div>
+  <div class="bubble" style="left:14%; font-size:11px; animation-duration:10s; animation-delay:2s;">⚗️</div>
+  <div class="bubble" style="left:22%; font-size:20px; animation-duration:18s; animation-delay:1s;">🧪</div>
+  <div class="bubble" style="left:31%; font-size:13px; animation-duration:12s; animation-delay:4s;">⚗️</div>
+  <div class="bubble" style="left:40%; font-size:18px; animation-duration:15s; animation-delay:0.5s;">🧪</div>
+  <div class="bubble" style="left:49%; font-size:10px; animation-duration:9s; animation-delay:3s;">⚗️</div>
+  <div class="bubble" style="left:58%; font-size:19px; animation-duration:16s; animation-delay:2.5s;">🧪</div>
+  <div class="bubble" style="left:66%; font-size:13px; animation-duration:11s; animation-delay:5s;">⚗️</div>
+  <div class="bubble" style="left:74%; font-size:22px; animation-duration:19s; animation-delay:1.5s;">🧪</div>
+  <div class="bubble" style="left:82%; font-size:11px; animation-duration:10s; animation-delay:3.5s;">⚗️</div>
+  <div class="bubble" style="left:90%; font-size:17px; animation-duration:13s; animation-delay:0.8s;">🧪</div>
+  <div class="bubble" style="left:96%; font-size:10px; animation-duration:11s; animation-delay:4.5s;">⚗️</div>
+</div>
+<button class="theme-toggle" id="themeToggle" aria-label="Εναλλαγή σκούρου/ανοιχτού θέματος">🌙</button>
+<div class="wrap">
+
+  <div class="hero">
+    <span class="eyebrow"><span class="dot"></span>Κάψουλα 02 · Θερμοχημεία</span>
+    <h1>Ενθαλπία, Νόμοι θερμοχημείας και τιπς για λύση ασκήσεων σε χρόνο dt</h1>
+    <p class="sub">5 βασικές ιδέες, ένα πλήρες παράδειγμα με δύο τρόπους λύσης, και ένα γρήγορο τεστ για να δεις αν κόλλησαν.</p>
+    <div class="meta-row">
+      <span class="chip">⏱ 6 λεπτά ανάγνωση</span>
+      <span class="chip">✓ 2 τρόποι λύσης</span>
+      <span class="chip">✓ 3 ερωτήσεις ελέγχου</span>
+    </div>
+  </div>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Η θεωρία</span>
+    <h2>5 ιδέες που χρειάζεσαι</h2>
+    <div class="rules-grid">
+      <div class="rule-card" style="grid-column: 1 / -1;">
+        <span class="num">01</span>
+        <p><code>ΔΗ</code> είναι το ποσό θερμότητας που εκλύεται ή απορροφάται όταν αντιδρούν και παράγονται τόσα mol ουσιών όσα είναι οι συντελεστές των σωμάτων.</p>
+      </div>
+
+      <div class="rule-card" style="grid-column: 1 / -1;">
+        <span class="num">02</span>
+        <p>
+          <strong>Εξώθερμη:</strong> ελευθερώνουν θερμότητα, <code>ΔΗ &lt; 0</code>, Η(προϊόντων) &lt; Η(αντιδρώντων)<br>
+          <strong>Ενδόθερμη:</strong> απορροφούν θερμότητα, <code>ΔΗ &gt; 0</code>, Η(προϊόντων) &gt; Η(αντιδρώντων)<br>
+          <strong>Θερμοουδέτερη:</strong> <code>ΔΗ ≈ 0</code>, ούτε ελευθερώνουν ούτε απορροφούν θερμότητα
+        </p>
+      </div>
+    </div>
+
+    <div class="note-box">
+      ⚠️ <strong>Προσοχή:</strong> πρότυπες συνθήκες σημαίνει P = 1 atm, θ = 25°C, και για διαλύματα συγκέντρωση c = 1M.
+    </div>
+
+    <div class="note-box">
+      💡 <strong>Να θυμάσαι:</strong> κατά την εξουδετέρωση ισχυρού οξέος με ισχυρή βάση ελευθερώνεται θερμότητα ίση με <strong>57,1 kJ</strong> (ανά mol νερού που σχηματίζεται).
+    </div>
+
+    <div class="rules-grid" style="margin-top: 12px;">
+      <div class="rule-card" style="grid-column: 1 / -1;">
+        <span class="num">03</span>
+        <p>Η πρότυπη ενθαλπία σχηματισμού ενός <strong>στοιχείου</strong> στη σταθερότερη μορφή του είναι <code>ΔΗ°f = 0</code>.</p>
+      </div>
+      <div class="rule-card">
+        <span class="num">04</span>
+        <p><span style="display:block; font-family: var(--font-mono); font-size: 11px; color: var(--base); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 4px;">Νόμος / Αρχή Lavoisier-Laplace</span>Αν αντιστρέψεις μια αντίδραση, το ΔΗ <strong>αλλάζει πρόσημο</strong>. Αν πολλαπλασιάσεις τους συντελεστές, πολλαπλασιάζεται κι αυτό.</p>
+      </div>
+      <div class="rule-card">
+        <span class="num">05</span>
+        <p><strong>Νόμος Hess:</strong> το ΔΗ μιας αντίδρασης είναι το ίδιο, όποια διαδρομή κι αν ακολουθήσεις. Άρα μπορείς να προσθέτεις/αφαιρείς γνωστές αντιδράσεις (με τα ΔΗ τους) για να "χτίσεις" την άγνωστη.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Παράδειγμα</span>
+    <h2>Βρες το ΔΗ σχηματισμού του CH₄</h2>
+    <div class="example-box">
+      <span class="formula">Στόχος: C(γρ) + 2H₂(g) → CH₄(g), ΔΗf = ;</span>
+
+      <div class="given-list">
+        <div>(1) C(γρ) + O₂(g) → CO₂(g), ΔΗ₁ = −393,5 kJ</div>
+        <div>(2) H₂(g) + ½O₂(g) → H₂O(l), ΔΗ₂ = −285,8 kJ</div>
+        <div>(3) CH₄(g) + 2O₂(g) → CO₂(g) + 2H₂O(l), ΔΗ₃ = −890,3 kJ</div>
+      </div>
+
+      <p style="font-size: 13.5px; color: var(--ink-soft); margin-bottom: 4px;"><strong>Τρόπος 1 — Νόμος Hess (συνδυασμός αντιδράσεων)</strong></p>
+
+      <div class="step" data-open="true">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">1</span> Δες σε ποια πλευρά είναι κάθε ουσία <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            Στον στόχο, το CH₄ είναι <strong>προϊόν</strong> (δεξιά). Στην (3), το CH₄ είναι <strong>αντιδρών</strong> (αριστερά) — λάθος πλευρά. Κανόνας: όποτε μια ουσία είναι στη λάθος πλευρά, αντιστρέφεις ολόκληρη την αντίδραση.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">2</span> Αντέστρεψε την (3) <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            <span class="math">(3′): CO₂ + 2H₂O → CH₄ + 2O₂, ΔΗ₃′ = +890,3 kJ</span> — το πρόσημο αλλάζει (Lavoisier-Laplace)
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">3</span> Πρόσθεσε (1) + 2×(2) + (3′) <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            Αριστερά: C + O₂ + 2H₂ + O₂ + CO₂ + 2H₂O<br>
+            Δεξιά: CO₂ + 2H₂O + CH₄ + 2O₂<br>
+            Το 2× στο (2) γιατί χρειάζεσαι 2 H₂O για να ταιριάξει με την (3′)
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">4</span> Απάλειψε ό,τι είναι και στις δύο πλευρές <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            CO₂, 2H₂O και 2O₂ υπάρχουν εκατέρωθεν — σβήνουν. Μένει: <span class="math">C + 2H₂ → CH₄</span> — ακριβώς ο στόχος!
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">5</span> Πρόσθεσε τα ΔΗ με τον ίδιο τρόπο <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            <span class="math">ΔΗf = ΔΗ₁ + 2·ΔΗ₂ + ΔΗ₃′ = (−393,5) + 2(−285,8) + 890,3 = −74,8 kJ/mol</span>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size: 13.5px; color: var(--ink-soft); margin: 22px 0 4px;"><strong>Τρόπος 2 — Από πρότυπες ενθαλπίες σχηματισμού (πιο σύντομος)</strong></p>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">1</span> Δούλεψε πάνω στην αρχική (3), όχι στην αντίστροφη <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            Η (1) και η (2) είναι ήδη αντιδράσεις σχηματισμού: <span class="math">ΔΗf(CO₂) = ΔΗ₁, ΔΗf(H₂O) = ΔΗ₂, ΔΗf(O₂) = 0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">2</span> Εφάρμοσε τον τύπο <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            <span class="math">ΔΗ₃ = ΣΔΗf(προϊόντων) − ΣΔΗf(αντιδρώντων)</span><br>
+            <span class="math">ΔΗ₃ = [ΔΗf(CO₂) + 2ΔΗf(H₂O)] − [ΔΗf(CH₄) + 2ΔΗf(O₂)]</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">3</span> Αντικατέστησε τις γνωστές τιμές <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            <span class="math">−890,3 = [(−393,5) + 2(−285,8)] − [ΔΗf(CH₄) + 0]</span><br>
+            <span class="math">−890,3 = −965,1 − ΔΗf(CH₄)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <button class="step-toggle" onclick="toggleStep(this)">
+          <span class="idx">4</span> Λύσε ως προς ΔΗf(CH₄) <span class="chevron">›</span>
+        </button>
+        <div class="step-body">
+          <div class="step-body-inner">
+            <span class="math">ΔΗf(CH₄) = −965,1 + 890,3 = −74,8 kJ/mol</span> — ίδιο αποτέλεσμα, λιγότερα βήματα
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <section>
+    <span class="eyebrow"><span class="dot"></span>Γρήγορος έλεγχος</span>
+    <h2>3 ερωτήσεις, χωρίς χρονόμετρο</h2>
+
+    <div class="quiz-progress" id="quizProgress">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div id="quizContainer"></div>
+
+    <p id="quizDone" style="display:none; color:var(--base); font-weight:600;">
+      Ολοκλήρωσες τον έλεγχο για αυτή την κάψουλα. Πήγαινε στην επόμενη όποτε θες.
+    </p>
+  </section>
+
+  <div class="indicator-rule" role="separator"></div>
+
+  <footer>
+    <span>Φτιαγμένο με 💙 από μια φοιτήτρια</span>
+    <a class="next-topic" href="index.html">← Όλα τα κεφάλαια</a>
+  </footer>
+
+</div>
+
+<script>
+  function toggleStep(btn) {
+    const step = btn.closest('.step');
+    const isOpen = step.getAttribute('data-open') === 'true';
+    step.setAttribute('data-open', isOpen ? 'false' : 'true');
+  }
+
+  const questions = [
+    {
+      prompt: "Ποια σχέση ισχύει για μια εξώθερμη αντίδραση;",
+      options: ["ΔΗ > 0", "ΔΗ < 0", "ΔΗ = 0", "Εξαρτάται πάντα από τη θερμοκρασία"],
+      correct: 1,
+      insight: "Εξώθερμη σημαίνει ότι το σύστημα εκλύει θερμότητα στο περιβάλλον — άρα χάνει ενέργεια, γι' αυτό ΔΗ < 0."
+    },
+    {
+      prompt: "Αν αντιστρέψεις μια θερμοχημική εξίσωση, τι συμβαίνει στο ΔΗ της;",
+      options: ["Μένει ίδιο", "Αλλάζει πρόσημο", "Διπλασιάζεται", "Μηδενίζεται"],
+      correct: 1,
+      insight: "Αν μια αντίδραση εκλύει θερμότητα προς τη μία κατεύθυνση, προς την αντίστροφη θα την απορροφήσει — ίδια τιμή, αντίθετο πρόσημο."
+    },
+    {
+      prompt: "Ποια είναι η πρότυπη ενθαλπία σχηματισμού ενός στοιχείου στη σταθερότερη φυσική του κατάσταση;",
+      options: ["0", "1 kJ/mol", "Εξαρτάται από το στοιχείο", "Δεν ορίζεται"],
+      correct: 0,
+      insight: "Ένα στοιχείο στη σταθερότερη μορφή του (π.χ. O₂(g), C(γραφίτης)) είναι το σημείο αναφοράς — δεν 'σχηματίζεται' από κάτι άλλο, άρα ΔΗ°f = 0."
+    }
+  ];
+
+  let current = 0;
+  const container = document.getElementById('quizContainer');
+  const progressEl = document.getElementById('quizProgress');
+
+  function renderQuestion(i) {
+    const q = questions[i];
+    container.innerHTML = `
+      <div class="quiz-card">
+        <div class="quiz-q">Ερώτηση ${i + 1}</div>
+        <div class="quiz-formula">${q.prompt}</div>
+        <div class="options">
+          ${q.options.map((opt, idx) => `<button class="opt-btn" data-idx="${idx}">${opt}</button>`).join('')}
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <button class="next-btn" id="nextBtn">Επόμενη ερώτηση →</button>
+      </div>
+    `;
+    container.querySelectorAll('.opt-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleAnswer(btn, q));
+    });
+  }
+
+  function handleAnswer(btn, q) {
+    const chosen = parseInt(btn.dataset.idx);
+    const buttons = container.querySelectorAll('.opt-btn');
+    buttons.forEach(b => b.disabled = true);
+    buttons[q.correct].classList.add('correct');
+    if (chosen !== q.correct) btn.classList.add('wrong');
+
+    const feedback = document.getElementById('feedback');
+    if (chosen === q.correct) {
+      feedback.className = 'feedback show ok';
+      feedback.textContent = 'Σωστά. ' + q.insight;
+    } else {
+      feedback.className = 'feedback show miss';
+      feedback.textContent = 'Όχι ακριβώς — ' + q.insight;
+    }
+
+    progressEl.children[current].classList.add('done');
+
+    if (current < questions.length - 1) {
+      const nextBtn = document.getElementById('nextBtn');
+      nextBtn.classList.add('show');
+      nextBtn.addEventListener('click', () => { current++; renderQuestion(current); });
+    } else {
+      document.getElementById('quizDone').style.display = 'block';
+    }
+  }
+
+  renderQuestion(current);
+</script>
+
+<script>
+  let lastSpawn = 0;
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastSpawn < 70) return;
+      lastSpawn = now;
+      const size = 12 + Math.random() * 8;
+      const b = document.createElement('div');
+      b.className = 'mouse-bubble';
+      b.style.fontSize = size + 'px';
+      b.style.left = e.clientX + 'px';
+      b.style.top = e.clientY + 'px';
+      b.textContent = Math.random() < 0.5 ? '🧪' : '⚗️';
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 1100);
+    });
+  }
+
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  });
+</script>
+
+</body>
+</html>

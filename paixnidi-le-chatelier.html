@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Chatelier — Παιχνίδι Μετατόπισης Ισορροπίας</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper:      #E1EDF8;
+    --paper-line: #D6E6F2;
+    --card-bg:    #FFFFFF;
+    --ink:        #223142;
+    --ink-soft:   #64798D;
+    --acid:       #E49A98;
+    --base:       #6FA8DC;
+    --base-soft:  #DCEEFB;
+    --amber:      #F0CB86;
+    --amber-soft: #FBF3E0;
+    --radius:     14px;
+    --font-display: "Fraunces", serif;
+    --font-body:    "IBM Plex Sans", sans-serif;
+    --font-mono:    "IBM Plex Mono", monospace;
+  }
+  body.dark {
+    --paper:      #0E1826;
+    --paper-line: #2A3A54;
+    --card-bg:    #16223A;
+    --ink:        #EAF2FA;
+    --ink-soft:   #8DA0B8;
+    --amber-soft: #3A2E18;
+  }
+
+  * { box-sizing: border-box; }
+
+  .theme-toggle {
+    position: fixed; top: 18px; right: 18px; z-index: 50;
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--card-bg); border: 1px solid var(--paper-line);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+    cursor: pointer; box-shadow: 0 2px 10px rgba(34,49,66,0.1);
+  }
+
+  body {
+    margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-body);
+    line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .bubble-layer {
+    position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+  }
+  .bubble {
+    position: absolute; bottom: -60px;
+    animation: rise linear infinite;
+    filter: drop-shadow(0 2px 3px rgba(111,168,220,0.25));
+  }
+  @keyframes rise {
+    0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 0; }
+    8%   { opacity: 0.5; }
+    50%  { transform: translateY(-54vh) rotate(8deg) scale(1.05); }
+    92%  { opacity: 0.3; }
+    100% { transform: translateY(-108vh) rotate(-6deg) scale(1.15); opacity: 0; }
+  }
+  .mouse-bubble {
+    position: fixed; pointer-events: none; z-index: 1;
+    animation: float-up 1.1s ease-out forwards;
+  }
+  @keyframes float-up {
+    0%   { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    100% { transform: translate(-50%, -130px) scale(0.5) rotate(15deg); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .bubble, .mouse-bubble { animation: none !important; display: none; }
+  }
+
+  .wrap { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; padding: 48px 24px 96px; }
+  :focus-visible { outline: 2px solid var(--base); outline-offset: 3px; }
+  a { color: var(--base); }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono);
+    font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--base); }
+
+  h1 {
+    font-family: var(--font-display); font-weight: 600; font-size: clamp(26px, 4.5vw, 36px);
+    line-height: 1.15; margin: 14px 0 10px;
+  }
+  .sub { color: var(--ink-soft); font-size: 16px; margin: 0 0 28px; max-width: 50ch; }
+
+  .reaction-box {
+    background: var(--ink); color: var(--paper); border-radius: var(--radius);
+    padding: 16px 20px; text-align: center; font-family: var(--font-mono); font-size: 17px;
+    margin-bottom: 8px; line-height: 1.6;
+  }
+  .reaction-box .dh { color: var(--amber); font-size: 13px; display: block; margin-top: 4px; }
+
+  /* ---------- Γραμμή θέσης ισορροπίας — το ίδιο gradient motif,
+     τώρα λειτουργικό: η κουκκίδα δείχνει πού "κάθεται" η ισορροπία ---------- */
+  .eq-track-wrap { margin: 36px 0 8px; }
+  .eq-labels {
+    display: flex; justify-content: space-between; font-family: var(--font-mono);
+    font-size: 11.5px; color: var(--ink-soft); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .eq-track {
+    position: relative; height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--acid), var(--amber) 50%, var(--base) 100%);
+    opacity: 0.55;
+  }
+  .eq-marker {
+    position: absolute; top: 50%; width: 22px; height: 22px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--ink); box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transform: translate(-50%, -50%); left: 50%;
+    transition: left 0.7s cubic-bezier(.4,0,.2,1);
+    display: none;
+  }
+  .eq-marker.show { display: block; }
+
+  .drag-range {
+    position: absolute; top: 50%; left: 0; width: 100%; height: 30px;
+    transform: translateY(-50%); margin: 0; opacity: 1;
+    -webkit-appearance: none; appearance: none; background: transparent; cursor: grab;
+  }
+  .drag-range:active { cursor: grabbing; }
+  .drag-range::-webkit-slider-runnable-track { background: transparent; height: 30px; }
+  .drag-range::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--base); box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    margin-top: -12px; cursor: grab;
+  }
+  .drag-range::-moz-range-track { background: transparent; height: 30px; border: none; }
+  .drag-range::-moz-range-thumb {
+    width: 26px; height: 26px; border-radius: 50%; background: #fff; border: 3px solid var(--base);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: grab;
+  }
+  .drag-range:disabled { display: none; }
+
+  .drag-hint {
+    text-align: center; font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft);
+    margin-top: 10px;
+  }
+
+  .scenario-card {
+    background: var(--card-bg); border: 1px solid var(--paper-line); border-radius: var(--radius);
+    padding: 22px; margin-top: 32px;
+  }
+  .scenario-label { font-family: var(--font-mono); font-size: 11.5px; color: var(--base); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .scenario-text { font-size: 16.5px; font-weight: 500; margin-bottom: 18px; }
+
+  .answer-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  @media (max-width: 480px) { .answer-row { grid-template-columns: 1fr; } }
+  .ans-btn {
+    font-family: var(--font-body); font-size: 14px; font-weight: 500; padding: 13px 10px;
+    border-radius: 10px; border: 1px solid var(--paper-line); background: var(--paper); cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .ans-btn:hover:not(:disabled) { border-color: var(--base); }
+  .ans-btn:disabled { cursor: default; }
+  .ans-btn.correct { background: var(--base-soft); border-color: var(--base); }
+  .ans-btn.wrong { background: #FBEAEA; border-color: var(--acid); }
+
+  .feedback { margin-top: 16px; padding: 13px 15px; border-radius: 10px; font-size: 14px; display: none; }
+  .feedback.show { display: block; }
+  .feedback.ok { background: var(--base-soft); color: #2B5A80; }
+  .feedback.miss { background: var(--amber-soft); color: #7A5A15; }
+
+  .bottom-row {
+    display: flex; align-items: center; justify-content: space-between; margin-top: 18px; flex-wrap: wrap; gap: 10px;
+  }
+  .streak {
+    font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft);
+  }
+  .next-btn {
+    all: unset; font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 10px 18px; border-radius: 999px; background: var(--base); color: #fff; cursor: pointer; display: none;
+  }
+  .next-btn.show { display: inline-block; }
+
+  footer { margin-top: 40px; font-size: 13px; color: var(--ink-soft); }
+  footer a { font-family: var(--font-mono); font-size: 12.5px; }
+
+  @media (prefers-reduced-motion: reduce) { .eq-marker { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="bubble-layer" id="bubbleLayer">
+  <div class="bubble" style="left:6%; font-size:16px; animation-duration:14s; animation-delay:0s;">🧪</div>
+  <div class="bubble" style="left:14%; font-size:11px; animation-duration:10s; animation-delay:2s;">⚗️</div>
+  <div class="bubble" style="left:22%; font-size:20px; animation-duration:18s; animation-delay:1s;">🧪</div>
+  <div class="bubble" style="left:31%; font-size:13px; animation-duration:12s; animation-delay:4s;">⚗️</div>
+  <div class="bubble" style="left:40%; font-size:18px; animation-duration:15s; animation-delay:0.5s;">🧪</div>
+  <div class="bubble" style="left:49%; font-size:10px; animation-duration:9s; animation-delay:3s;">⚗️</div>
+  <div class="bubble" style="left:58%; font-size:19px; animation-duration:16s; animation-delay:2.5s;">🧪</div>
+  <div class="bubble" style="left:66%; font-size:13px; animation-duration:11s; animation-delay:5s;">⚗️</div>
+  <div class="bubble" style="left:74%; font-size:22px; animation-duration:19s; animation-delay:1.5s;">🧪</div>
+  <div class="bubble" style="left:82%; font-size:11px; animation-duration:10s; animation-delay:3.5s;">⚗️</div>
+  <div class="bubble" style="left:90%; font-size:17px; animation-duration:13s; animation-delay:0.8s;">🧪</div>
+  <div class="bubble" style="left:96%; font-size:10px; animation-duration:11s; animation-delay:4.5s;">⚗️</div>
+</div>
+<button class="theme-toggle" id="themeToggle" aria-label="Εναλλαγή σκούρου/ανοιχτού θέματος">🌙</button>
+<div class="wrap">
+
+  <span class="eyebrow"><span class="dot"></span>Χημική Ισορροπία · Παιχνίδι</span>
+  <h1>Προς τα πού γέρνει η ισορροπία;</h1>
+  <p class="sub">Δίνεται μια αντίδραση σε ισορροπία. Σε κάθε γύρο, μια "διαταραχή" — πρόβλεψε προς τα πού μετατοπίζεται, με βάση την αρχή Le Chatelier. Χωρίς χρονόμετρο, όσους γύρους θες.</p>
+
+  <p style="font-size: 14.5px; color: var(--ink-soft); background: var(--card-bg); border: 1px solid var(--paper-line); border-radius: var(--radius); padding: 12px 16px;">
+    <strong>Αρχή Le Chatelier:</strong> όταν διαταράξεις μια ισορροπία, το σύστημα μετατοπίζεται προς την κατεύθυνση που αντισταθμίζει τη διαταραχή.
+  </p>
+
+  <div class="reaction-label" id="reactionLabel" style="font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px;">Αντίδραση 1 από 2</div>
+  <div class="reaction-box" id="reactionBox">
+    N₂(g) + 3H₂(g) ⇌ 2NH₃(g)
+    <span class="dh">ΔΗ = −92 kJ (εξώθερμη προς τα δεξιά)</span>
+  </div>
+
+  <div class="eq-track-wrap">
+    <div class="eq-labels">
+      <span>⬅ Περισσότερα αντιδρώντα</span>
+      <span>Περισσότερα προϊόντα ➡</span>
+    </div>
+    <div class="eq-track">
+      <div class="eq-marker" id="eqMarker"></div>
+      <input type="range" class="drag-range" id="dragRange" min="0" max="100" value="50" step="1" aria-label="Σύρε στη θέση που πιστεύεις ότι μετατοπίζεται η ισορροπία">
+    </div>
+    <p class="drag-hint">👆 Σύρε την κουκκίδα στην κατεύθυνση που νομίζεις, και άφησέ τη</p>
+  </div>
+
+  <div class="scenario-card">
+    <div class="scenario-label">Γύρος <span id="roundNum">1</span></div>
+    <div class="scenario-text" id="scenarioText">—</div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <div class="bottom-row">
+      <span class="streak" id="streak">Σερί: 0 ✓</span>
+      <button class="next-btn" id="nextBtn">Επόμενο σενάριο →</button>
+    </div>
+  </div>
+
+  <footer>
+    <a href="index.html">← Όλα τα κεφάλαια</a>
+    <div style="margin-top:10px;">Φτιαγμένο με 💙 από μια φοιτήτρια</div>
+  </footer>
+
+</div>
+
+<script>
+  /* ----------------------------------------------------------------
+     ΣΕΝΑΡΙΑ — κάθε ένα έχει το κείμενο, τη σωστή κατεύθυνση
+     (left/right/none) και μια σύντομη αιτιολόγηση.
+     ---------------------------------------------------------------- */
+  const reactions = [
+    {
+      formula: "N₂(g) + 3H₂(g) ⇌ 2NH₃(g)",
+      dh: "ΔΗ = −92 kJ (εξώθερμη προς τα δεξιά)",
+      scenarios: [
+        { text: "Αυξάνεις τη συγκέντρωση του Ν₂.", dir: "right",
+          insight: "Περισσότερο αντιδρών → η ισορροπία μετατοπίζεται προς τα προϊόντα για να το καταναλώσει." },
+        { text: "Αφαιρείς NH₃ καθώς παράγεται.", dir: "right",
+          insight: "Λιγότερο προϊόν → η ισορροπία μετατοπίζεται δεξιά για να το αναπληρώσει." },
+        { text: "Αυξάνεις τη θερμοκρασία.", dir: "left",
+          insight: "Η αντίδραση είναι εξώθερμη προς τα δεξιά — η αύξηση θερμοκρασίας ευνοεί την ενδόθερμη κατεύθυνση, δηλαδή προς τα αριστερά." },
+        { text: "Μειώνεις τον όγκο του δοχείου (αυξάνεις την πίεση).", dir: "right",
+          insight: "4 mol αερίων αντιδρώντων → 2 mol προϊόντων. Η ισορροπία μετατοπίζεται προς τη μεριά με λιγότερα mol αερίου, δηλαδή δεξιά." },
+        { text: "Προσθέτεις καταλύτη.", dir: "none",
+          insight: "Ο καταλύτης επιταχύνει και τις δύο κατευθύνσεις εξίσου — φτάνεις πιο γρήγορα στην ισορροπία, αλλά η θέση της δεν αλλάζει." },
+        { text: "Αυξάνεις τον όγκο του δοχείου (μειώνεις την πίεση).", dir: "left",
+          insight: "Λιγότερη πίεση ευνοεί τη μεριά με περισσότερα mol αερίου — εδώ τα αντιδρώντα, άρα αριστερά." },
+        { text: "Μειώνεις τη θερμοκρασία.", dir: "right",
+          insight: "Λιγότερη θερμότητα ευνοεί την εξώθερμη κατεύθυνση — δεξιά, προς τα προϊόντα." },
+        { text: "Προσθέτεις επιπλέον H₂.", dir: "right",
+          insight: "Περισσότερο αντιδρών → μετατόπιση προς τα προϊόντα, ίδια λογική με το Ν₂." },
+        { text: "Αφαιρείς N₂ από το δοχείο.", dir: "left",
+          insight: "Λιγότερο αντιδρών → η ισορροπία μετατοπίζεται αριστερά για να το αναπληρώσει." }
+      ]
+    },
+    {
+      formula: "N₂O₄(g) ⇌ 2NO₂(g)",
+      dh: "ΔΗ = +58 kJ (ενδόθερμη προς τα δεξιά)",
+      scenarios: [
+        { text: "Αυξάνεις τη συγκέντρωση του Ν₂Ο₄.", dir: "right",
+          insight: "Περισσότερο αντιδρών → η ισορροπία μετατοπίζεται προς τα προϊόντα για να το καταναλώσει." },
+        { text: "Αφαιρείς NO₂ καθώς παράγεται.", dir: "right",
+          insight: "Λιγότερο προϊόν → η ισορροπία μετατοπίζεται δεξιά για να το αναπληρώσει." },
+        { text: "Αυξάνεις τη θερμοκρασία.", dir: "right",
+          insight: "Εδώ η αντίδραση είναι ενδόθερμη προς τα δεξιά — η αύξηση θερμοκρασίας ευνοεί ακριβώς αυτή την κατεύθυνση." },
+        { text: "Μειώνεις τον όγκο του δοχείου (αυξάνεις την πίεση).", dir: "left",
+          insight: "1 mol αντιδρώντος → 2 mol προϊόντων. Η αύξηση πίεσης ευνοεί τη μεριά με λιγότερα mol αερίου — εδώ τα αριστερά." },
+        { text: "Προσθέτεις καταλύτη.", dir: "none",
+          insight: "Ο καταλύτης επιταχύνει και τις δύο κατευθύνσεις εξίσου — δεν αλλάζει τη θέση της ισορροπίας." },
+        { text: "Αυξάνεις τον όγκο του δοχείου (μειώνεις την πίεση).", dir: "right",
+          insight: "Λιγότερη πίεση ευνοεί τη μεριά με περισσότερα mol αερίου — εδώ τα προϊόντα, άρα δεξιά." },
+        { text: "Μειώνεις τη θερμοκρασία.", dir: "left",
+          insight: "Λιγότερη θερμότητα δυσκολεύει την ενδόθερμη κατεύθυνση — η ισορροπία πάει αριστερά." },
+        { text: "Προσθέτεις επιπλέον NO₂.", dir: "left",
+          insight: "Περισσότερο προϊόν → η ισορροπία μετατοπίζεται αριστερά για να το καταναλώσει." },
+        { text: "Αφαιρείς Ν₂Ο₄ από το δοχείο.", dir: "left",
+          insight: "Λιγότερο αντιδρών → η ισορροπία μετατοπίζεται αριστερά για να το αναπληρώσει." }
+      ]
+    }
+  ];
+
+  // Ενοποιημένη λίστα γύρων, ένας ανά σενάριο, κρατώντας ποια αντίδραση αφορά
+  const allRounds = [];
+  reactions.forEach(r => {
+    r.scenarios.forEach(s => allRounds.push({ reaction: r, scenario: s }));
+  });
+
+  let round = 0;
+  let streak = 0;
+  let order = [];
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  const marker = document.getElementById('eqMarker');
+  const dragRange = document.getElementById('dragRange');
+  const reactionBox = document.getElementById('reactionBox');
+  const reactionLabel = document.getElementById('reactionLabel');
+  const scenarioText = document.getElementById('scenarioText');
+  const roundNum = document.getElementById('roundNum');
+  const feedback = document.getElementById('feedback');
+  const nextBtn = document.getElementById('nextBtn');
+  const streakEl = document.getElementById('streak');
+
+  let currentScenario = null;
+  let answered = false;
+
+  function newRound() {
+    if (order.length === 0) order = shuffle(allRounds);
+    const current = order.pop();
+    const { reaction, scenario } = current;
+    currentScenario = scenario;
+    answered = false;
+    const reactionIdx = reactions.indexOf(reaction) + 1;
+    round++;
+    roundNum.textContent = round;
+    reactionLabel.textContent = `Αντίδραση ${reactionIdx} από ${reactions.length}`;
+    reactionBox.innerHTML = `${reaction.formula}<span class="dh">${reaction.dh}</span>`;
+    scenarioText.textContent = scenario.text;
+
+    marker.classList.remove('show');
+    dragRange.disabled = false;
+    dragRange.value = 50;
+    feedback.className = 'feedback';
+    nextBtn.classList.remove('show');
+  }
+
+  function zoneFromValue(v) {
+    if (v < 38) return 'left';
+    if (v > 62) return 'right';
+    return 'none';
+  }
+
+  dragRange.addEventListener('change', () => {
+    if (answered) return;
+    answered = true;
+    const chosen = zoneFromValue(parseInt(dragRange.value));
+    handleAnswer(chosen, currentScenario);
+  });
+
+  function handleAnswer(chosen, s) {
+    dragRange.disabled = true;
+
+    const droppedPos = dragRange.value + '%';
+    marker.style.transition = 'none';
+    marker.style.left = droppedPos;
+    marker.classList.add('show');
+    // Μικρή καθυστέρηση ώστε να "διαβάσει" το transition, μετά ολισθαίνει στη σωστή θέση
+    requestAnimationFrame(() => {
+      marker.style.transition = 'left 0.7s cubic-bezier(.4,0,.2,1)';
+      const targetPos = s.dir === 'left' ? '22%' : s.dir === 'right' ? '78%' : '50%';
+      marker.style.left = targetPos;
+    });
+
+    if (chosen === s.dir) {
+      streak++;
+      feedback.className = 'feedback show ok';
+      feedback.textContent = 'Σωστά. ' + s.insight;
+    } else {
+      streak = 0;
+      feedback.className = 'feedback show miss';
+      feedback.textContent = 'Όχι ακριβώς — ' + s.insight;
+    }
+    streakEl.textContent = `Σερί: ${streak} ✓`;
+    nextBtn.classList.add('show');
+  }
+
+  nextBtn.addEventListener('click', newRound);
+  newRound();
+</script>
+
+<script>
+  let lastSpawn = 0;
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.addEventListener('mousemove', (e) => {
+      const now = Date.now();
+      if (now - lastSpawn < 70) return;
+      lastSpawn = now;
+      const size = 12 + Math.random() * 8;
+      const b = document.createElement('div');
+      b.className = 'mouse-bubble';
+      b.style.fontSize = size + 'px';
+      b.style.left = e.clientX + 'px';
+      b.style.top = e.clientY + 'px';
+      b.textContent = Math.random() < 0.5 ? '🧪' : '⚗️';
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 1100);
+    });
+  }
+
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+  });
+</script>
+
+</body>
+</html>
